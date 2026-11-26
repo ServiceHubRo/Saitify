@@ -6,6 +6,7 @@ export default defineConfig({
     command: 'pnpm --filter web start --port 3100',
     url: 'http://localhost:3100',
     reuseExistingServer: !process.env.CI,
+    env: { PLAYGROUND_ENABLED: 'true' },
   },
   use: {
     baseURL: 'http://localhost:3100',
