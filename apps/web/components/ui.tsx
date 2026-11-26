@@ -141,7 +141,7 @@ export function PageHero({
 
 export function CtaBand({
   title = 'Your website starts with an idea.',
-  text = 'Saitify is in development. Request early access and we will let you know when you can create your website.',
+  text = 'Describe your idea, answer a few simple questions and see your website take shape. Publishing and accounts are coming next.',
 }: {
   title?: string;
   text?: string;
@@ -164,7 +164,7 @@ export function CtaBand({
             </h2>
             <p className="mt-4 text-lg text-lavender">{text}</p>
             <div className="mt-8">
-              <ButtonLink href="/contact?topic=early-access" variant="light">
+              <ButtonLink href="/create" variant="light">
                 Create your website
               </ButtonLink>
             </div>

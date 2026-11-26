@@ -119,10 +119,15 @@ test('FAQ accordion toggles', async ({ page }) => {
   await expect(first).not.toHaveAttribute('open', '');
 });
 
-test('CTA leads to the early access contact page', async ({ page }) => {
+test('CTA opens the configurator', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your website' }).first().click();
-  await expect(page).toHaveURL(/\/contact\?topic=early-access$/);
+  await expect(page).toHaveURL(/\/create$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'What do you want to create?' })).toBeVisible();
+});
+
+test('early access request page still works', async ({ page }) => {
+  await page.goto('/contact?topic=early-access');
   await expect(page.getByRole('heading', { level: 1, name: 'Get early access' })).toBeVisible();
   await expect(page.getByLabel('Subject')).toHaveValue('Early access request');
 });

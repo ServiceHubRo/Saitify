@@ -7,7 +7,7 @@ export const SITE = {
     'Create a beautiful, professional website for your business without coding or complicated tools.',
 } as const;
 
-export const CTA_HREF = '/contact?topic=early-access';
+export const CTA_HREF = '/create';
 
 export const NAV = [
   { label: 'Features', href: '/features' },

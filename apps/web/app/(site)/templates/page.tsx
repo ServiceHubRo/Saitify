@@ -63,7 +63,7 @@ export default function TemplatesPage() {
 
       <CtaBand
         title="Found a look you like?"
-        text="Request early access and we will let you know when you can start from one of these designs."
+        text="Create your website and pick the starting design that fits your idea."
       />
     </>
   );

@@ -8,3 +8,9 @@
 
 ## D-010: Engine blocks are server-renderable and token-driven
 No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsiveness uses container queries so the playground can preview device widths faithfully.
+
+## Phase 3 decisions
+- Configurator is a pure TS package; UI in apps/web.
+- Output is the Phase 2 config; no parallel schema.
+- Planned capabilities are recorded only, never faked.
+- Templates are engine variant presets, previewed with the user's own data.
