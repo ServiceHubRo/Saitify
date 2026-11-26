@@ -1,7 +1,7 @@
 import '@saitify/engine/styles.css';
 import { getTemplate } from '@saitify/configurator';
 import type { WebsiteInput } from '@saitify/engine';
-import { STATUS_INFO, categoryName, getProject, openProject } from '@saitify/platform';
+import { STATUS_INFO, categoryName, getProject, getSiteState, openProject } from '@saitify/platform';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -9,7 +9,9 @@ import { Badge, Notice, buttonClass } from '../../../../../components/app/primit
 import { formatDate } from '../../../../../components/app/project-card';
 import { ProjectDetailsEditor } from '../../../../../components/app/project-details';
 import { ProjectActions } from '../../../../../components/app/project-menu';
+import { WebsitePanel } from '../../../../../components/app/website-panel';
 import { Preview } from '../../../../../components/configurator/preview';
+import { hosting } from '../../../../../lib/server/hosting';
 import { getCtx } from '../../../../../lib/server/platform';
 import { requireSession } from '../../../../../lib/server/session';
 
@@ -26,6 +28,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
   const sp = await searchParams;
   const tpl = getTemplate(project.templateId);
   const status = STATUS_INFO[project.status];
+  const site = project.site !== null ? await getSiteState(db, session.user.id, project.id, hosting()) : null;
 
   return (
     <>
@@ -51,7 +54,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         </section>
       ) : (
         <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-8">
+            {site && project.status !== 'archived' ? <WebsitePanel projectId={project.id} initial={site} /> : null}
             {opened.website ? (
               <Preview project={{ website: opened.website, config: project.site as WebsiteInput }} />
             ) : (
@@ -77,7 +81,6 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               ))}
             </dl>
             {opened.wizard.interests.length > 0 ? <p className="mt-4 text-sm text-midnight/70">You also noted interest in features that are not available yet. They are saved as a wish list and nothing was built for them.</p> : null}
-            <p className="mt-4 rounded-xl bg-cloud p-3 text-sm text-midnight/75">Publishing is not available yet. For now your project is saved and editable here.</p>
           </aside>
         </div>
       )}

@@ -1,9 +1,10 @@
-import { getProject, openForEditor } from '@saitify/platform';
+import { getProject, getSiteState, openForEditor } from '@saitify/platform';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EditorGate } from '../../../components/editor/editor-gate';
 import { buttonClass } from '../../../components/app/primitives';
 import { getCtx } from '../../../lib/server/platform';
+import { hosting } from '../../../lib/server/hosting';
 import { requireSession } from '../../../lib/server/session';
 
 export const dynamic = 'force-dynamic';
@@ -41,5 +42,6 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
       <Unavailable id={id} title="We cannot read this website">Its saved data is not in a format the editor can open safely, so nothing was changed. You can rebuild it from your configurator answers on the project page, or contact support with this project’s id: <code className="rounded bg-cloud px-1.5 py-0.5 text-sm">{id}</code>.</Unavailable>
     );
   }
-  return <EditorGate project={{ id: project.id, name: project.name, revision: project.revision, site: opened.website, edited: opened.edited }} issues={opened.issues.map((i) => `${i.path || 'website'}: ${i.message}`)} />;
+  const publish = await getSiteState(db, session.user.id, project.id, hosting());
+  return <EditorGate project={{ id: project.id, name: project.name, revision: project.revision, site: opened.website, edited: opened.edited, publish }} issues={opened.issues.map((i) => `${i.path || 'website'}: ${i.message}`)} />;
 }

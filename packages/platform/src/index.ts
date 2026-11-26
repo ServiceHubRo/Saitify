@@ -7,3 +7,8 @@ export * from './auth/service';
 export * from './projects/status';
 export * from './projects/config';
 export * from './projects/service';
+export * from './publishing/subdomain';
+export * from './publishing/hosting';
+export * from './publishing/status';
+export * from './publishing/validate';
+export * from './publishing/service';
