@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <AuthShell
       title="Welcome back"
       intro="Sign in to continue with your websites."
-      footer={<>New to Saitify? <Link href={`/register${q}`} className="font-semibold text-violet underline underline-offset-4">Create an account</Link></>}
+      footer={<>New to Saitlify? <Link href={`/register${q}`} className="font-semibold text-violet underline underline-offset-4">Create an account</Link></>}
     >
       <LoginForm next={next} notice={sp.notice === 'deleted' ? 'Your account and all of its projects were deleted.' : undefined} />
     </AuthShell>

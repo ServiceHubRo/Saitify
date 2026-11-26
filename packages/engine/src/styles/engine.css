@@ -1,5 +1,5 @@
 /*
- * SAITIFY website engine styles.
+ * SAITLIFY website engine styles.
  *
  * Every value comes from design tokens exposed as --sf-* custom properties on .sf-root
  * (see src/design/resolve.ts). Responsive behavior uses container queries against .sf-root, so a

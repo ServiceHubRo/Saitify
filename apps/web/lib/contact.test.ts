@@ -5,7 +5,7 @@ const valid = {
   name: 'Ana Pop',
   email: 'ana@example.com',
   subject: 'Early access',
-  message: 'I would like to try Saitify.',
+  message: 'I would like to try Saitlify.',
 };
 
 describe('validateContact', () => {

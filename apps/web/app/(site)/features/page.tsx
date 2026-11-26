@@ -15,9 +15,9 @@ import { Badge, CtaBand, PageHero, Section } from '../../../components/ui';
 export const metadata: Metadata = {
   title: 'Features',
   description:
-    'What Saitify is being built to do: create, design, preview, publish and manage a professional website without coding.',
+    'What Saitlify is being built to do: create, design, preview, publish and manage a professional website without coding.',
   alternates: { canonical: '/features' },
-  openGraph: { url: '/features', title: 'Features | Saitify' },
+  openGraph: { url: '/features', title: 'Features | Saitlify' },
 };
 
 type Status = 'Planned' | 'Previews available';
@@ -33,7 +33,7 @@ const GROUPS: ReadonlyArray<{
   {
     id: 'creation',
     title: 'Website creation',
-    text: 'Describe your business in plain language and Saitify turns it into the starting point of your website.',
+    text: 'Describe your business in plain language and Saitlify turns it into the starting point of your website.',
     points: ['A short guided start', 'No technical decisions', 'Content shaped around your business'],
     status: 'Planned',
     visual: <IllustrationCreation />,
@@ -102,7 +102,7 @@ export default function FeaturesPage() {
       <PageHero
         eyebrow="Features"
         title="Everything you need to put your business online"
-        text="Saitify is in development. This page describes what we are building, and marks clearly what exists today."
+        text="Saitlify is in development. This page describes what we are building, and marks clearly what exists today."
       />
 
       <section className="border-b border-midnight/5 bg-white py-6">

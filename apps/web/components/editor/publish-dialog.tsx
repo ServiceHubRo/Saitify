@@ -68,6 +68,7 @@ export function PublishDialog({
   const [avail, setAvail] = useState<Availability | 'checking' | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [limit, setLimit] = useState<{ used: number; max: number | null } | null>(null);
   const [result, setResult] = useState<{ state: SiteStateLite; deployment: DeploymentLite } | null>(null);
   const [reach, setReach] = useState<{ status: Reach; why: string | null }>({ status: 'idle', why: null });
   const seq = useRef(0);
@@ -80,6 +81,7 @@ export function PublishDialog({
   const load = useCallback(async () => {
     setPhase('loading');
     setMessage(null);
+    setLimit(null);
     setFieldError(null);
     await flushRef.current.flushNow();
     if (!flushRef.current.isSaved()) {
@@ -151,12 +153,13 @@ export function PublishDialog({
         setPhase('ready');
         return;
       }
-      if (r.error.fields?.subdomain || r.status === 409) {
+      if (r.error.code !== 'limit' && (r.error.fields?.subdomain || r.status === 409)) {
         setFieldError(r.error.fields?.subdomain ?? r.error.message);
         setPhase('ready');
         return;
       }
       setMessage(r.status === 429 ? 'You have published a lot in the last hour. Please wait a little.' : r.error.message);
+      setLimit(r.error.code === 'limit' && r.error.details?.billing === true ? { used: Number(r.error.details.used), max: r.error.details.max === null ? null : Number(r.error.details.max) } : null);
       setPhase('ready');
       return;
     }
@@ -195,7 +198,7 @@ export function PublishDialog({
 
         {phase === 'ready' && pre ? (
           <>
-            {message ? <Notice tone="error">{message}</Notice> : null}
+            {message ? <Notice tone="error">{message}{limit ? <> <a href="/billing" className="font-semibold underline">See plans</a>. Your existing websites stay online.</> : null}</Notice> : null}
             {saveBlocked ? <Notice tone="warning">Your latest changes are not saved, so they cannot be published yet. Resolve the save problem shown at the top of the editor.</Notice> : null}
 
             <section aria-labelledby="pub-check">

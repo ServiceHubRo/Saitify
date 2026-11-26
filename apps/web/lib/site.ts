@@ -1,7 +1,7 @@
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://saitify.ro';
 
 export const SITE = {
-  name: 'Saitify',
+  name: 'Saitlify',
   tagline: 'Your idea. Your website.',
   description:
     'Create a beautiful, professional website for your business without coding or complicated tools.',
@@ -65,7 +65,7 @@ export const HOME_STEPS = [
 export const JOURNEY = [
   {
     title: 'Choose the type of website',
-    text: 'Start from what you are building: a business presence, a portfolio, a service page or something else. This tells Saitify which structure fits you best.',
+    text: 'Start from what you are building: a business presence, a portfolio, a service page or something else. This tells Saitlify which structure fits you best.',
   },
   {
     title: 'Tell us about your business',
@@ -150,10 +150,10 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'How do I create my website?',
-        a: 'Saitify is being built so that you answer a few questions about your business, pick a design, customize it and publish. The website creator is still in development. You can request early access on the contact page and we will let you know when it opens.',
+        a: 'Saitlify is being built so that you answer a few questions about your business, pick a design, customize it and publish. The website creator is still in development. You can request early access on the contact page and we will let you know when it opens.',
       },
       {
-        q: 'Is Saitify available today?',
+        q: 'Is Saitlify available today?',
         a: 'Not yet. This website presents the product we are building. Nothing you see in the previews is a working editor yet.',
       },
     ],
@@ -163,7 +163,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'Do I need coding experience?',
-        a: 'No. Saitify is designed for people with no technical background. You work with text, images and design choices, never code.',
+        a: 'No. Saitlify is designed for people with no technical background. You work with text, images and design choices, never code.',
       },
     ],
   },
@@ -180,7 +180,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
       },
       {
         q: 'Can I create multiple websites?',
-        a: 'We have not finalized this. Whether and how multiple websites are supported will be confirmed together with pricing.',
+        a: 'The Free plan includes one published website. Paid plans can include more, and each plan lists exactly how many on the Pricing page.',
       },
       {
         q: 'Can I choose a template?',
@@ -193,7 +193,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'Will my website work on mobile?',
-        a: 'Yes. Websites created with Saitify are designed to work well on phones, tablets and desktop screens.',
+        a: 'Yes. Websites created with Saitlify are designed to work well on phones, tablets and desktop screens.',
       },
     ],
   },
@@ -214,12 +214,12 @@ export const FAQ_GROUPS: ReadonlyArray<{
     title: 'Pricing and subscription',
     items: [
       {
-        q: 'How much does Saitify cost?',
-        a: 'Pricing has not been announced yet. When it is, it will be published on the Pricing page.',
+        q: 'How much does Saitlify cost?',
+        a: 'You can start on the Free plan without a card. Paid plans, when available, are listed with their real prices on the Pricing page.',
       },
       {
         q: 'What happens if I cancel?',
-        a: 'Subscription terms are not defined yet, so we cannot give you a final answer. Cancellation and what happens to your website will be described clearly in the Terms before launch.',
+        a: 'You can cancel any time from the Billing page and keep your paid features until the period you paid for ends. Your projects and websites are never deleted because of cancellation or a plan change; new limits only apply to creating and publishing more.',
       },
     ],
   },

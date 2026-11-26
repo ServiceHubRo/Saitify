@@ -52,7 +52,7 @@ export function SaveDraft() {
         {view.kind === 'empty' ? (
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-midnight">{view.expired ? 'Your draft expired' : 'No draft to save'}</h1>
-            <p className="mt-3 text-midnight/70">{view.expired ? 'A draft on this device is kept for 30 days, and this one was older, so it was cleared.' : 'There is no website draft in this browser. Drafts live on the device where you started, so if you began on another device or browser, open Saitify there. If you already saved it, you will find it in your projects.'}</p>
+            <p className="mt-3 text-midnight/70">{view.expired ? 'A draft on this device is kept for 30 days, and this one was older, so it was cleared.' : 'There is no website draft in this browser. Drafts live on the device where you started, so if you began on another device or browser, open Saitlify there. If you already saved it, you will find it in your projects.'}</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <LinkButton href="/dashboard">Go to my projects</LinkButton>
               <LinkButton href="/create" variant="secondary">Start a new website</LinkButton>
@@ -62,7 +62,7 @@ export function SaveDraft() {
         {view.kind === 'error' ? (
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold tracking-tight text-midnight">We could not save it yet</h1>
-            <Notice tone="error">{view.message}</Notice>
+            <Notice tone="error">{view.message}{view.message.includes('Open Billing') ? <> <a href="/billing" className="font-semibold underline">Go to Billing</a>.</> : null}</Notice>
             <p className="text-midnight/70">Your answers are still safe on this device.</p>
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => void run()}>Try again</Button>

@@ -49,8 +49,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
       {!opened.ok ? (
         <section aria-labelledby="broken-title" className="mt-10 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-950">
           <h2 id="broken-title" className="text-xl font-semibold">We cannot open this project’s saved configuration</h2>
-          <p className="mt-2 max-w-2xl">{opened.reason === 'newer_version' ? 'It was saved by a newer version of Saitify than the one running now.' : 'Its saved data is not in a format we can read safely.'} We did not change it. You can download the raw data, duplicate or archive the project, or delete it.</p>
-          <a href={`/api/projects/${project.id}`} download={`saitify-project-${project.id}.json`} className={buttonClass('secondary', 'mt-4')}>Download raw data</a>
+          <p className="mt-2 max-w-2xl">{opened.reason === 'newer_version' ? 'It was saved by a newer version of Saitlify than the one running now.' : 'Its saved data is not in a format we can read safely.'} We did not change it. You can download the raw data, duplicate or archive the project, or delete it.</p>
+          <a href={`/api/projects/${project.id}`} download={`saitlify-project-${project.id}.json`} className={buttonClass('secondary', 'mt-4')}>Download raw data</a>
         </section>
       ) : (
         <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">

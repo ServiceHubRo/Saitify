@@ -1,7 +1,7 @@
 export type ApiErrorBody = { code: string; message: string; fields?: Record<string, string>; retryAfterSec?: number; details?: Record<string, unknown> };
 export type ApiResult<T = Record<string, unknown>> = { ok: true; status: number; data: T } | { ok: false; status: number; error: ApiErrorBody };
 
-const NETWORK: ApiErrorBody = { code: 'network', message: 'We could not reach Saitify. Check your connection and try again.' };
+const NETWORK: ApiErrorBody = { code: 'network', message: 'We could not reach Saitlify. Check your connection and try again.' };
 
 /** One place that turns every failure (offline, HTML error page, bad JSON) into a friendly, typed error. */
 export async function call<T = Record<string, unknown>>(url: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<ApiResult<T>> {

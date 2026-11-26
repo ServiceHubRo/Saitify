@@ -30,7 +30,7 @@ const STORIES = [
   },
   {
     title: 'Built for every screen',
-    text: 'Most of your visitors will arrive on a phone. Websites made with Saitify are designed mobile-first, and the layout adapts to tablets and desktops.',
+    text: 'Most of your visitors will arrive on a phone. Websites made with Saitlify are designed mobile-first, and the layout adapts to tablets and desktops.',
     visual: <DevicePair variant="photography" label="One website shown on desktop and on a phone" />,
     visualLabel: undefined,
   },
@@ -62,7 +62,7 @@ export default function HomePage() {
             </h1>
             <p className="rise rise-3 mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-midnight/70 sm:text-xl">
               Create a beautiful, professional website for your business in minutes. No coding, no
-              complicated tools, just your idea and Saitify.
+              complicated tools, just your idea and Saitlify.
             </p>
             <div className="rise rise-3 mt-9 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <ButtonLink href={CTA_HREF}>Create your website</ButtonLink>
@@ -78,7 +78,7 @@ export default function HomePage() {
               label="Concept illustration: a website shown on a desktop screen and on a phone."
             />
             <p className="mt-8 text-center text-sm text-midnight/55">
-              Concept illustration. Saitify is in development and this is not a working product yet.
+              Concept illustration. Saitlify is in development and this is not a working product yet.
             </p>
           </div>
         </Container>
@@ -90,7 +90,7 @@ export default function HomePage() {
           id="how-heading"
           eyebrow="How it works"
           title="From idea to website in four steps"
-          text="This is the experience Saitify is being built to deliver."
+          text="This is the experience Saitlify is being built to deliver."
         />
         <ol className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {HOME_STEPS.map((step, i) => (
@@ -196,7 +196,7 @@ export default function HomePage() {
       <Section labelledBy="benefits-heading">
         <SectionHeading
           id="benefits-heading"
-          eyebrow="Why Saitify"
+          eyebrow="Why Saitlify"
           title="Real value for people who are not web designers"
         />
         <ul className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">

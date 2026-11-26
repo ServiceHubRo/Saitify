@@ -11,14 +11,14 @@ export function Logo({ light = false }: { light?: boolean }) {
   return (
     <Link
       href="/"
-      aria-label="Saitify home"
+      aria-label="Saitlify home"
       className="inline-flex min-h-11 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet"
     >
       <LogoMark />
       <span
         className={`text-xl font-semibold tracking-tight ${light ? 'text-white' : 'text-midnight'}`}
       >
-        Saitify
+        Saitlify
       </span>
     </Link>
   );
