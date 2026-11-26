@@ -5,3 +5,6 @@
 - **D-003** OPEN: design token hex values are placeholders (Midnight, Violet, Blue, Lavender, Cloud, Secondary). Replace in `apps/web/app/tokens.css` and `packages/engine/src/index.ts` once the brand spec is confirmed.
 - **D-004** OPEN: host and DNS for `saitify.ro` (Vercel suggested for wildcard subdomains). Needed for Phase 6.
 - **D-005** Logo: S mark supplied by Eduard, redrawn as SVG in `apps/web/public/logo.svg` (also `app/icon.svg` favicon) on a gradient sampled from his artwork.
+
+## D-010: Engine blocks are server-renderable and token-driven
+No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsiveness uses container queries so the playground can preview device widths faithfully.
