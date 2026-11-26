@@ -12,6 +12,7 @@ import { Canvas, DEVICES, type DeviceId } from './canvas';
 import { IconButton } from './fields';
 import { Icon, type IconName } from './icons';
 import { Menu } from './menu';
+import { PublishDialog, type FixTarget, type SiteStateLite } from './publish-dialog';
 import { DesignPanel, MenuPanel, PagesPanel, StructurePanel } from './panels-left';
 import { AddPageDialog, AddSectionDialog, PageInspector, SectionInspector, ShortcutsDialog, SiteSettingsDialog } from './panels-right';
 import { Select } from './select';
@@ -19,7 +20,7 @@ import type { Report, Selection } from './types';
 import { useEditorState, type EditResult } from './use-editor';
 import { clearBackup, readBackup, useSiteSync, type Backup } from './use-site-sync';
 
-export type EditorProject = { id: string; name: string; revision: number; site: Website; edited: boolean };
+export type EditorProject = { id: string; name: string; revision: number; site: Website; edited: boolean; publish: SiteStateLite };
 type LeftTab = 'sections' | 'pages' | 'design' | 'menu';
 const TABS: { id: LeftTab; label: string; icon: IconName }[] = [
   { id: 'sections', label: 'Sections', icon: 'layers' },
@@ -56,7 +57,16 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
   const [tab, setTab] = useState<LeftTab>('sections');
   const [sheet, setSheet] = useState<'left' | 'right' | null>(null);
   const [reveal, setReveal] = useState<{ id: string; n: number } | null>(null);
-  const [dialog, setDialog] = useState<null | 'section' | 'page' | 'site' | 'keys' | 'reset'>(null);
+  const [dialog, setDialog] = useState<null | 'section' | 'page' | 'site' | 'keys' | 'reset' | 'publish'>(null);
+  const [pub, setPub] = useState<SiteStateLite>(project.publish);
+  // The website as it was when the server last confirmed what is online. Any edit after that is an unpublished change.
+  const syncedSite = useRef<Website | null>(project.publish.hasUnpublishedChanges ? null : project.site);
+  const siteRef = useRef(site);
+  siteRef.current = site;
+  const onPublishState = useCallback((s: SiteStateLite) => {
+    setPub(s);
+    syncedSite.current = s.hasUnpublishedChanges ? null : siteRef.current;
+  }, []);
   const [snack, setSnack] = useState<{ text: string; n: number } | null>(null);
   const [guides, setGuides] = useState(true);
   const [backup, setBackup] = useState<Backup | null>(null);
@@ -155,6 +165,21 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
     return () => window.removeEventListener('keydown', onKey);
   }, [api, sync, dialog, preview, sheet]);
 
+  function fixIssue(t: FixTarget) {
+    if (t.kind === 'site' || t.kind === 'seo') return setDialog('site');
+    if (t.kind === 'menu') {
+      setTab('menu');
+      if (narrow) setSheet('left');
+      return;
+    }
+    if (t.kind === 'section' && t.sectionId && findSection(site, t.sectionId)) return select({ sectionId: t.sectionId }, false);
+    if (t.pageId && findPageById(site, t.pageId)) {
+      setPageId(t.pageId);
+      setSelection(null);
+      if (narrow) setSheet('right');
+    }
+  }
+
   async function loadLatest() {
     const r = await call<{ project: { revision: number; site: unknown } }>(`/api/projects/${project.id}`, { method: 'GET' });
     if (!r.ok) return toast('error', r.status === 404 ? 'This project no longer exists.' : 'Could not load the latest version. Try again.');
@@ -203,6 +228,8 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
     );
 
   const status = sync.status;
+  const pubChanged = pub.hasUnpublishedChanges || syncedSite.current !== site;
+  const pubLabel = pub.status === 'published' && !pubChanged ? 'Published' : pub.status === 'published' ? 'Publish changes' : 'Publish';
   // A banner that needs a decision must never be hidden behind an open bottom sheet.
   useEffect(() => {
     if (status === 'conflict' || status === 'signed-out' || status === 'missing') setSheet(null);
@@ -245,6 +272,9 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
           <IconButton label={`Redo${api.canRedo && api.redoLabel ? `: ${api.redoLabel}` : ''}`} icon="redo" disabled={!api.canRedo} onClick={api.redo} />
           <Button variant={preview ? 'primary' : 'secondary'} aria-pressed={preview} aria-label={preview ? 'Exit preview' : 'Preview'} onClick={() => setPreview((p) => !p)} className="ml-1 min-h-10 px-3.5 text-[14px]">
             <Icon name="eye" className="size-4" /> <span className="hidden sm:inline">{preview ? 'Exit preview' : 'Preview'}</span>
+          </Button>
+          <Button variant={pubLabel === 'Published' ? 'secondary' : 'primary'} onClick={() => setDialog('publish')} aria-label={pubLabel} className="min-h-10 px-3.5 text-[14px]">
+            <Icon name={pubLabel === 'Published' ? 'check' : 'globe'} className="size-4" /> <span className="hidden sm:inline">{pubLabel}</span>
           </Button>
           <Menu
             label="More"
@@ -366,6 +396,15 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
         </div>
       ) : null}
 
+      <PublishDialog
+        open={dialog === 'publish'}
+        onClose={() => setDialog(null)}
+        projectId={project.id}
+        flush={sync}
+        saveBlocked={status === 'conflict' || status === 'signed-out' || status === 'missing' || status === 'error' || status === 'offline'}
+        onState={onPublishState}
+        onFix={fixIssue}
+      />
       <AddSectionDialog open={dialog === 'section'} onClose={() => setDialog(null)} onChoose={addChosen} />
       <AddPageDialog open={dialog === 'page'} onClose={() => setDialog(null)} api={api} report={report} onCreated={(id) => (setPageId(id), setSelection(null), setTab('sections'))} />
       <SiteSettingsDialog open={dialog === 'site'} onClose={() => setDialog(null)} api={api} />

@@ -30,3 +30,11 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - Plain-text content only, because the engine's content model is plain strings. Rich text would be an engine change.
 - Once a site is edited in the editor, configurator saves keep the site (the answers are saved separately). "Rebuild from my answers" is an explicit, confirmed action.
 - Ownership is checked before validation on save, so responses do not reveal whether someone else's project exists.
+
+## Phase 6
+- **D-060 Snapshot per deployment.** Live sites are served from immutable stored snapshots, never from the editable project; activation is one atomic pointer update.
+- **D-061 Success means verified.** A deployment is Published only after it is stored, re-rendered and activated; reachability is a separate, honestly reported check.
+- **D-062 Two hosting modes.** Subdomain (needs wildcard DNS/TLS) and path fallback, chosen by `SITE_BASE_DOMAIN`.
+- **D-063 One canonical control per action.** Publish lives in the editor; the project page only shows status, unpublish and history/restore.
+- **D-064 Address claims are DB-level.** Unique index plus transaction; unpublishing keeps the claim.
+- **D-065 Renderer loaded at runtime.** `react-dom/server` is loaded via Node `require` in route handlers because Next.js forbids bundling it into server components.

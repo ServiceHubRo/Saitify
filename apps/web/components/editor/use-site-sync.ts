@@ -175,5 +175,5 @@ export function useSiteSync(opts: { projectId: string; initialRevision: number; 
     setStatus('saved');
   }, []);
 
-  return { status, lastSaved, problem, retry, overwrite, flushNow: flush, markServerState, revision: () => revision.current };
+  return { status, lastSaved, problem, retry, overwrite, flushNow: flush, isSaved: () => latest.current === savedSite.current && !blocked.current, markServerState, revision: () => revision.current };
 }

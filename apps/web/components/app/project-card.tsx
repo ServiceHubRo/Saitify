@@ -14,6 +14,7 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
     <article aria-labelledby={`p-${p.id}`} className="flex min-w-0 flex-col rounded-3xl border border-midnight/10 bg-white p-5 shadow-sm transition hover:shadow-md sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={p.status}>{STATUS_INFO[p.status].label}</Badge>
+        {p.online ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-950"><span className="size-1.5 rounded-full bg-emerald-600" aria-hidden="true" />Online</span> : null}
         <span className="text-sm text-midnight/70">{categoryName(p.category)}</span>
       </div>
       <h3 id={`p-${p.id}`} className="mt-3 text-lg font-semibold leading-snug tracking-tight text-midnight [overflow-wrap:anywhere]">

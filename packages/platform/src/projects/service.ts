@@ -24,6 +24,8 @@ export type ProjectSummary = {
   revision: number;
   /** A website exists for this project, so it can be opened in the visual editor. */
   hasSite: boolean;
+  /** The website is published and online right now. */
+  online: boolean;
 };
 
 export type Project = ProjectSummary & {
@@ -38,19 +40,19 @@ export type Project = ProjectSummary & {
 
 type SummaryRow = {
   id: string; name: string; description: string; category: string | null; template_id: string | null; language: string;
-  status: StoredStatus; archived_at: Date | null; created_at: Date; updated_at: Date; revision: number; has_site: boolean;
+  status: StoredStatus; archived_at: Date | null; created_at: Date; updated_at: Date; revision: number; has_site: boolean; online: boolean;
 };
 type FullRow = SummaryRow & { name_custom: boolean; wizard_version: number; wizard: unknown; site: unknown | null; site_version: number | null; meta: { editor?: { editedAt?: string } } | null };
 
 const iso = (d: Date | string) => new Date(d).toISOString();
-const SUMMARY_COLS = 'id, name, description, category, template_id, language, status, archived_at, created_at, updated_at, revision, (site is not null) as has_site';
+const SUMMARY_COLS = 'id, name, description, category, template_id, language, status, archived_at, created_at, updated_at, revision, (site is not null) as has_site, exists (select 1 from sites s where s.project_id = projects.id and s.state = \'published\') as online';
 const FULL_COLS = `${SUMMARY_COLS}, name_custom, wizard_version, wizard, site, site_version, meta`;
 
 function toSummary(r: SummaryRow): ProjectSummary {
   return {
     id: r.id, name: r.name, description: r.description, category: r.category, templateId: r.template_id, language: r.language,
     status: displayStatus(r.status, r.archived_at), storedStatus: r.status,
-    archivedAt: r.archived_at ? iso(r.archived_at) : null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), revision: r.revision, hasSite: r.has_site,
+    archivedAt: r.archived_at ? iso(r.archived_at) : null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), revision: r.revision, hasSite: r.has_site, online: r.online,
   };
 }
 const toProject = (r: FullRow): Project => ({ ...toSummary(r), nameCustom: r.name_custom, wizardVersion: r.wizard_version, wizard: r.wizard, site: r.site, siteVersion: r.site_version, siteEditedAt: r.meta?.editor?.editedAt ?? null });
@@ -291,6 +293,11 @@ export async function duplicateProject(db: Db, ownerId: string, id: string): Pro
 
 async function setArchived(db: Db, ownerId: string, id: string, archived: boolean): Promise<Project> {
   if (!isUuid(id)) throw new ProjectError('not_found', 'Project not found.');
+  if (archived) {
+    // An archived project is hidden from the dashboard, so it must not keep a website online that its owner can no longer see.
+    const live = await db.query('select 1 from sites s join projects p on p.id = s.project_id where p.owner_id = $1 and p.id = $2 and s.state = $3', [ownerId, id, 'published']);
+    if (live.length > 0) throw new ProjectError('conflict', 'This website is online. Unpublish it before archiving the project.', { code: 'published' });
+  }
   const rows = await db.query<FullRow>(
     `update projects set archived_at = ${archived ? 'coalesce(archived_at, now())' : 'null'}, revision = revision + 1
       where owner_id = $1 and id = $2 returning ${FULL_COLS}`,
