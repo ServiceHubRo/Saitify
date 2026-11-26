@@ -1,4 +1,4 @@
-import { checkSubdomainFormat, hostingFromEnv, subdomainFromHost } from '@saitify/platform';
+import { checkSubdomainFormat, hostingFromEnv, subdomainFromHost } from '@saitify/platform/hosting';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
