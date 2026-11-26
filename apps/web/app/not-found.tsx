@@ -1,10 +1,18 @@
 import type { Metadata } from 'next';
+import { Footer } from '../components/footer';
+import { Header } from '../components/header';
 import { ButtonLink, Container } from '../components/ui';
+
+import { SkipLink } from '../components/skip-link';
 
 export const metadata: Metadata = { title: 'Page not found' };
 
 export default function NotFound() {
   return (
+    <>
+      <SkipLink />
+      <Header />
+      <main id="main">
     <section className="bg-cloud py-24 sm:py-32">
       <Container className="text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.14em] text-violet">404</p>
@@ -19,5 +27,8 @@ export default function NotFound() {
         </div>
       </Container>
     </section>
+      </main>
+      <Footer />
+    </>
   );
 }
