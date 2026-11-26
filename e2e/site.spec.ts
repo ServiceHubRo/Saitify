@@ -30,7 +30,7 @@ for (const route of ROUTES) {
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('h1')).toBeVisible();
 
-    expect(await page.title()).toMatch(/Saitify/);
+    expect(await page.title()).toMatch(/Saitlify/);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.{40,}/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
@@ -132,11 +132,14 @@ test('early access request page still works', async ({ page }) => {
   await expect(page.getByLabel('Subject')).toHaveValue('Early access request');
 });
 
-test('pricing page shows no prices', async ({ page }) => {
+test('pricing page shows only real plans: Free is always there, nothing invented', async ({ page }) => {
   await page.goto('/pricing');
-  await expect(page.getByRole('heading', { level: 1, name: 'Pricing coming soon' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Start free. Upgrade when you grow.' })).toBeVisible();
+  await expect(page.getByText('Free', { exact: true }).first()).toBeVisible();
+  // Any amount shown must come from a plan synchronized with Stripe, so the page may only show money if a paid plan exists.
+  const paid = await page.locator('[data-plan]').count();
   const text = await page.locator('main').innerText();
-  expect(text).not.toMatch(/[€$£]\s?\d|\d\s?(RON|EUR|USD|lei)\b|\/\s?(month|mo|year)/i);
+  if (paid <= 1) expect(text).not.toMatch(/[€$£]\s?\d|\d\s?(RON|EUR|USD|lei)\b/i);
 });
 
 test('contact form: validation messages', async ({ page }) => {
