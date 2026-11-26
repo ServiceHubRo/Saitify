@@ -1,0 +1,9 @@
+/* PLACEHOLDER palette: confirm against the brand spec (docs/DECISIONS.md D-003). */
+@theme {
+  --color-midnight: #0b1020;
+  --color-violet: #7c3aed;
+  --color-blue: #2563eb;
+  --color-lavender: #c4b5fd;
+  --color-cloud: #f4f6fb;
+  --color-secondary: #64748b;
+}

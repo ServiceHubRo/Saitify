@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-cloud);
+  color: var(--color-midnight);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
