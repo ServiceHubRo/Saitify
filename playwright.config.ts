@@ -3,10 +3,19 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   webServer: {
-    command: 'pnpm --filter web start --port 3100',
+    // Fresh embedded Postgres and mail outbox for every run (see docs/PHASE4.md). Never used outside tests.
+    command: 'rm -rf .e2e-data && mkdir -p .e2e-data && pnpm --filter web start --port 3100',
     url: 'http://localhost:3100',
     reuseExistingServer: !process.env.CI,
-    env: { PLAYGROUND_ENABLED: 'true' },
+    env: {
+      PLAYGROUND_ENABLED: 'true',
+      SAITIFY_DB: 'pglite',
+      PGLITE_DIR: `${process.cwd()}/.e2e-data/db`,
+      EMAIL_TRANSPORT: 'outbox',
+      EMAIL_OUTBOX_FILE: `${process.cwd()}/.e2e-data/outbox.jsonl`,
+      APP_URL: 'http://localhost:3100',
+      RATE_LIMIT_IP_HEADER: 'x-test-ip',
+    },
   },
   use: {
     baseURL: 'http://localhost:3100',

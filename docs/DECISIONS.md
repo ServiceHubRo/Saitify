@@ -14,3 +14,12 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - Output is the Phase 2 config; no parallel schema.
 - Planned capabilities are recorded only, never faked.
 - Templates are engine variant presets, previewed with the user's own data.
+
+## Phase 4 decisions
+- **D-040 Own auth on plain Postgres, not Supabase Auth.** Full control of sessions, tokens and rate limits; any Postgres host works (Supabase is just a host). Passwords use scrypt; tokens are random and stored hashed.
+- **D-041 Two real drivers behind one `Db` interface.** `postgres` for production; PGlite (embedded Postgres) for tests and local dev only, refused on serverless.
+- **D-042 Migrations are explicit.** Append-only, checksummed, run by a script; the app never migrates a production database silently and reports "schema not ready" instead.
+- **D-043 Hard deletes.** Deleting a project or account removes rows (cascade). No soft-delete trash; backups are the database host's concern.
+- **D-044 Unverified accounts can use the app.** A banner nudges verification; email-changing and recovery flows still require tokens.
+- **D-045 Registration vs. enumeration.** Existing email gets a generic response plus a notice mail; the only residual signal is whether a session starts.
+- **D-046 Optimistic concurrency.** Every project carries a `revision`; stale writes get 409 and the user chooses (load latest / overwrite).
