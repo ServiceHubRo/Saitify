@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@saitify/configurator": "workspace:^",
+    "@saitify/editor": "workspace:^",
     "@saitify/engine": "workspace:^",
     "@saitify/platform": "workspace:^",
     "next": "^16.4.6",

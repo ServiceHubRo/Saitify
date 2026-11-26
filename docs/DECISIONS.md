@@ -23,3 +23,10 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - **D-044 Unverified accounts can use the app.** A banner nudges verification; email-changing and recovery flows still require tokens.
 - **D-045 Registration vs. enumeration.** Existing email gets a generic response plus a notice mail; the only residual signal is whether a session starts.
 - **D-046 Optimistic concurrency.** Every project carries a `revision`; stale writes get 409 and the user chooses (load latest / overwrite).
+
+## Phase 5
+- The editor renders with the public `SiteRenderer` (preview mode) instead of an editor-specific renderer, so what is edited is what is published.
+- Forms are generated from the block registry's Zod schemas; no hand-written form per block.
+- Plain-text content only, because the engine's content model is plain strings. Rich text would be an engine change.
+- Once a site is edited in the editor, configurator saves keep the site (the answers are saved separately). "Rebuild from my answers" is an explicit, confirmed action.
+- Ownership is checked before validation on save, so responses do not reveal whether someone else's project exists.

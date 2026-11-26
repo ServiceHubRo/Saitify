@@ -41,6 +41,9 @@ importers:
       '@saitify/configurator':
         specifier: workspace:^
         version: link:../../packages/configurator
+      '@saitify/editor':
+        specifier: workspace:^
+        version: link:../../packages/editor
       '@saitify/engine':
         specifier: workspace:^
         version: link:../../packages/engine
@@ -106,6 +109,25 @@ importers:
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/editor:
+    dependencies:
+      '@saitify/engine':
+        specifier: workspace:^
+        version: link:../engine
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/react':
+        specifier: ^19.3.3
+        version: 19.3.3
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

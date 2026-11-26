@@ -9,10 +9,10 @@ import { Button, buttonClass } from './primitives';
 import { useToast } from './toast';
 import { inputClass } from '../configurator/fields';
 
-type Props = { id: string; name: string; archived: boolean; layout?: 'menu' | 'row'; afterDelete?: string };
+type Props = { id: string; name: string; archived: boolean; layout?: 'menu' | 'row'; afterDelete?: string; hasSite?: boolean };
 
 /** Duplicate / archive / restore / delete for one project. Every action is a real API call that the server checks against the owner. */
-export function ProjectActions({ id, name, archived, layout = 'menu', afterDelete }: Props) {
+export function ProjectActions({ id, name, archived, layout = 'menu', afterDelete, hasSite = false }: Props) {
   const router = useRouter();
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -77,7 +77,10 @@ export function ProjectActions({ id, name, archived, layout = 'menu', afterDelet
   const matches = typed.trim().toLowerCase() === name.trim().toLowerCase();
   const items = (
     <>
-      <Link href={`/edit/${id}`} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[15px] hover:bg-cloud focus-visible:outline-2 focus-visible:outline-violet">Continue editing</Link>
+      {hasSite && !archived ? (
+        <Link href={`/editor/${id}`} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[15px] hover:bg-cloud focus-visible:outline-2 focus-visible:outline-violet">Open visual editor</Link>
+      ) : null}
+      <Link href={`/edit/${id}`} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[15px] hover:bg-cloud focus-visible:outline-2 focus-visible:outline-violet">Edit answers</Link>
       <button type="button" disabled={busy !== null} onClick={() => act('duplicate')} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[15px] hover:bg-cloud focus-visible:outline-2 focus-visible:outline-violet">{busy === 'duplicate' ? 'Duplicating…' : 'Duplicate'}</button>
       {archived ? (
         <button type="button" disabled={busy !== null} onClick={() => act('restore')} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-[15px] hover:bg-cloud focus-visible:outline-2 focus-visible:outline-violet">{busy === 'restore' ? 'Restoring…' : 'Restore'}</button>
@@ -92,7 +95,8 @@ export function ProjectActions({ id, name, archived, layout = 'menu', afterDelet
     <div ref={root} className={layout === 'row' ? 'flex flex-wrap items-center gap-2' : 'relative'}>
       {layout === 'row' ? (
         <>
-          <Link href={`/edit/${id}`} className={buttonClass('primary')}>Continue editing</Link>
+          {hasSite && !archived ? <Link href={`/editor/${id}`} className={buttonClass('primary')}>Open visual editor</Link> : null}
+          <Link href={`/edit/${id}`} className={buttonClass(hasSite && !archived ? 'secondary' : 'primary')}>Edit answers</Link>
           <Button variant="secondary" loading={busy === 'duplicate'} disabled={busy !== null} onClick={() => act('duplicate')}>Duplicate</Button>
           {archived ? (
             <Button variant="secondary" loading={busy === 'restore'} disabled={busy !== null} onClick={() => act('restore')}>Restore</Button>
