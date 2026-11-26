@@ -14,6 +14,9 @@ export default defineConfig({
       EMAIL_TRANSPORT: 'outbox',
       EMAIL_OUTBOX_FILE: `${process.cwd()}/.e2e-data/outbox.jsonl`,
       APP_URL: 'http://localhost:3100',
+      // Published sites are served at <name>.localhost:3100 (browsers resolve *.localhost to loopback).
+      SITE_BASE_DOMAIN: 'localhost:3100',
+      SITE_SCHEME: 'http',
       RATE_LIMIT_IP_HEADER: 'x-test-ip',
     },
   },
