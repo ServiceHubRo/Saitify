@@ -187,7 +187,7 @@ test.describe('email verification', () => {
   test('an invalid link explains itself and offers a new one without revealing accounts', async ({ page }) => {
     await page.goto('/verify-email#token=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     await expect(page.getByTestId('token-failure')).toContainText('not valid');
-    await page.getByLabel('Email').fill('nobody-here@example.com');
+    await page.getByLabel('Email').fill(uniqueEmail('nobody'));
     await page.getByRole('button', { name: 'Send a new link' }).click();
     await expect(page.getByText(/we sent a new link/i)).toBeVisible();
     await page.goto('/verify-email');
@@ -214,10 +214,11 @@ test.describe('password recovery', () => {
 
     await page.context().clearCookies();
     await page.goto('/forgot-password');
-    await page.getByLabel('Email').fill('nobody-at-all@example.com');
+    const ghost = uniqueEmail('ghost');
+    await page.getByLabel('Email').fill(ghost);
     await page.getByRole('button', { name: 'Send reset link' }).click();
     await expect(page.getByText(/If an account exists/)).toBeVisible();
-    expect(mailsTo('nobody-at-all@example.com')).toHaveLength(0);
+    expect(mailsTo(ghost)).toHaveLength(0);
 
     await page.goto('/forgot-password');
     await page.getByLabel('Email').fill(email);
