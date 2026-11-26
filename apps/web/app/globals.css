@@ -55,3 +55,10 @@ body {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
+
+/* Visual editor canvas: the website itself is untouched. These rules only affect the editing surface. */
+.sf-editing { cursor: default; }
+.sf-editing .sf-diagnostics { display: none; }
+.sf-editing :where(a, button, input, textarea, select) { cursor: pointer; }
+.sf-editing * { -webkit-user-select: none; user-select: none; }
+.sf-editing [data-sf-editing] { outline: 2px solid #2563eb; outline-offset: 3px; cursor: text; -webkit-user-select: text; user-select: text; }

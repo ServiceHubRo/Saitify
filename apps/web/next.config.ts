@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@saitify/engine', '@saitify/configurator', '@saitify/platform'],
+  transpilePackages: ['@saitify/engine', '@saitify/configurator', '@saitify/platform', '@saitify/editor'],
   // Native/WASM database drivers must not be bundled.
   serverExternalPackages: ['postgres', '@electric-sql/pglite'],
   async headers() {

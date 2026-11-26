@@ -61,6 +61,6 @@ export function safeNext(value: unknown, fallback = '/dashboard'): string {
   } catch {
     return fallback;
   }
-  const allowed = ['/dashboard', '/create', '/account', '/edit'];
+  const allowed = ['/dashboard', '/create', '/account', '/edit', '/editor'];
   return allowed.some((p) => path === p || path.startsWith(`${p}/`)) ? value : fallback;
 }

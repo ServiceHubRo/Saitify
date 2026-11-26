@@ -40,7 +40,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         </div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-midnight [overflow-wrap:anywhere] sm:text-4xl">{project.name}</h1>
         <div className="mt-3"><ProjectDetailsEditor id={project.id} name={project.name} description={project.description} revision={project.revision} /></div>
-        <div className="mt-6"><ProjectActions id={project.id} name={project.name} archived={project.status === 'archived'} layout="row" afterDelete="/dashboard" /></div>
+        <div className="mt-6"><ProjectActions id={project.id} name={project.name} archived={project.status === 'archived'} layout="row" afterDelete="/dashboard" hasSite={project.site !== null} /></div>
       </header>
 
       {!opened.ok ? (

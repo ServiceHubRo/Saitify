@@ -116,7 +116,7 @@ export function SiteRenderer({
     try {
       const node = block.render(ctx);
       return (
-        <div key={section.id} className={cx('sf-wrap', hideClasses(section))}>
+        <div key={section.id} className={cx('sf-wrap', hideClasses(section))} {...(mode === 'preview' ? { 'data-sf-section': section.id } : {})}>
           {node}
         </div>
       );

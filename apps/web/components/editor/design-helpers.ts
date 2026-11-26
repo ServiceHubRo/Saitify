@@ -1,0 +1,2 @@
+export { addNavItem, customizeNavigation, deletePage, duplicatePage, findPageBySlug, moveNavItem, movePage, moveSectionBy, moveSection, removeNavItem, resetColors, resetNavigation, setColor, setHomePage, setPageVisible, setPalette, setStylePreset, updateNavItem } from '@saitify/editor';
+export const COLOR_KEYS_FOR_UI = ['primary', 'secondary', 'accent', 'background', 'surface', 'text', 'muted', 'border'] as const;

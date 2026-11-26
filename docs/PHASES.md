@@ -12,3 +12,6 @@ Done: `/create` wizard, catalog, generator, drafts, live preview. See docs/PHASE
 
 ## Phase 4 — Accounts & Projects
 Done on branch `phase-4-accounts-projects`: auth, account settings, dashboard, persistent versioned projects, guest-to-account configurator flow. See docs/PHASE4.md.
+
+## Phase 5 — Visual Website Editor
+Done on branch `phase-5-visual-editor`: `/editor/[id]`, `packages/editor`, autosave with conflict handling, responsive editor. See docs/PHASE5.md. Phase 6 not started (awaiting approval).

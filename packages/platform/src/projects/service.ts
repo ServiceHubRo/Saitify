@@ -2,7 +2,7 @@ import { validateWebsite, type Website } from '@saitify/engine';
 import type { WizardState } from '@saitify/configurator';
 import type { Db } from '../db/types';
 import { isUniqueViolation } from '../auth/service';
-import { derive, DEFAULT_PROJECT_NAME, MAX_WIZARD_BYTES, migrateWizard, WIZARD_VERSION, type LoadedWizard } from './config';
+import { derive, DEFAULT_PROJECT_NAME, MAX_WIZARD_BYTES, migrateWizard, SITE_VERSION, WIZARD_VERSION, type LoadedWizard } from './config';
 import { displayStatus, type DisplayStatus, type StoredStatus } from './status';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,6 +22,8 @@ export type ProjectSummary = {
   createdAt: string;
   updatedAt: string;
   revision: number;
+  /** A website exists for this project, so it can be opened in the visual editor. */
+  hasSite: boolean;
 };
 
 export type Project = ProjectSummary & {
@@ -30,26 +32,28 @@ export type Project = ProjectSummary & {
   wizard: unknown;
   site: unknown | null;
   siteVersion: number | null;
+  /** When the website was last changed in the visual editor. Null while the site is still the generated one. */
+  siteEditedAt: string | null;
 };
 
 type SummaryRow = {
   id: string; name: string; description: string; category: string | null; template_id: string | null; language: string;
-  status: StoredStatus; archived_at: Date | null; created_at: Date; updated_at: Date; revision: number;
+  status: StoredStatus; archived_at: Date | null; created_at: Date; updated_at: Date; revision: number; has_site: boolean;
 };
-type FullRow = SummaryRow & { name_custom: boolean; wizard_version: number; wizard: unknown; site: unknown | null; site_version: number | null };
+type FullRow = SummaryRow & { name_custom: boolean; wizard_version: number; wizard: unknown; site: unknown | null; site_version: number | null; meta: { editor?: { editedAt?: string } } | null };
 
 const iso = (d: Date | string) => new Date(d).toISOString();
-const SUMMARY_COLS = 'id, name, description, category, template_id, language, status, archived_at, created_at, updated_at, revision';
-const FULL_COLS = `${SUMMARY_COLS}, name_custom, wizard_version, wizard, site, site_version`;
+const SUMMARY_COLS = 'id, name, description, category, template_id, language, status, archived_at, created_at, updated_at, revision, (site is not null) as has_site';
+const FULL_COLS = `${SUMMARY_COLS}, name_custom, wizard_version, wizard, site, site_version, meta`;
 
 function toSummary(r: SummaryRow): ProjectSummary {
   return {
     id: r.id, name: r.name, description: r.description, category: r.category, templateId: r.template_id, language: r.language,
     status: displayStatus(r.status, r.archived_at), storedStatus: r.status,
-    archivedAt: r.archived_at ? iso(r.archived_at) : null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), revision: r.revision,
+    archivedAt: r.archived_at ? iso(r.archived_at) : null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), revision: r.revision, hasSite: r.has_site,
   };
 }
-const toProject = (r: FullRow): Project => ({ ...toSummary(r), nameCustom: r.name_custom, wizardVersion: r.wizard_version, wizard: r.wizard, site: r.site, siteVersion: r.site_version });
+const toProject = (r: FullRow): Project => ({ ...toSummary(r), nameCustom: r.name_custom, wizardVersion: r.wizard_version, wizard: r.wizard, site: r.site, siteVersion: r.site_version, siteEditedAt: r.meta?.editor?.editedAt ?? null });
 
 export class ProjectError extends Error {
   constructor(public code: 'not_found' | 'conflict' | 'invalid' | 'too_large' | 'limit', message: string, public details?: Record<string, unknown>) {
@@ -234,8 +238,11 @@ export async function updateProject(db: Db, ownerId: string, id: string, input: 
     set('template_id', d.templateId);
     set('language', d.language);
     set('status', d.status);
-    set('site', d.site === null ? null : JSON.stringify(d.site), '::jsonb');
-    set('site_version', d.siteVersion);
+    // Once the website has been edited visually it is no longer a pure function of the wizard answers: keep it.
+    params.push(d.site === null ? null : JSON.stringify(d.site));
+    sets.push(`site = case when meta ? 'editor' then site else $${params.length}::jsonb end`);
+    params.push(d.siteVersion);
+    sets.push(`site_version = case when meta ? 'editor' then site_version else $${params.length}::int end`);
     if (input.description === undefined) set('description', d.description);
     // The project name follows the business name until the user renames the project by hand.
     if (!hasName) {
@@ -300,4 +307,66 @@ export async function deleteProject(db: Db, ownerId: string, id: string): Promis
   if (!isUuid(id)) throw new ProjectError('not_found', 'Project not found.');
   const rows = await db.query('delete from projects where owner_id = $1 and id = $2 returning id', [ownerId, id]);
   if (rows.length === 0) throw new ProjectError('not_found', 'Project not found.');
+}
+
+
+/* ------------------------------------------------------------ visual editor */
+
+export const MAX_SITE_BYTES = 800_000;
+
+export type EditorOpen =
+  | { ok: true; website: Website; issues: { severity: string; code: string; path: string; message: string }[]; edited: boolean }
+  | { ok: false; reason: 'no_site' | 'invalid'; issues: { severity: string; code: string; path: string; message: string }[] };
+
+/** Reads the stored website for the editor. Never regenerates; reports anything the renderer would have to drop. */
+export function openForEditor(project: Project): EditorOpen {
+  if (!project.site) return { ok: false, reason: 'no_site', issues: [] };
+  const v = validateWebsite(project.site);
+  if (!v.website) return { ok: false, reason: 'invalid', issues: v.issues };
+  return { ok: true, website: v.website, issues: v.issues.filter((i) => i.severity === 'error'), edited: project.siteEditedAt !== null };
+}
+
+/**
+ * Saves the website exactly as the editor produced it, after validating it with the engine. A site that would lose
+ * content when normalized (any error issue) is rejected, so a bug in the client can never silently destroy sections.
+ */
+export async function saveSite(db: Db, ownerId: string, id: string, input: { expectedRevision: number; site: unknown }): Promise<Project> {
+  if (!isUuid(id)) throw new ProjectError('not_found', 'Project not found.');
+  // Ownership is decided before anything about the request is judged, so a stranger cannot tell "exists" from "does not".
+  const mine = await db.query<{ id: string }>('select id from projects where owner_id = $1 and id = $2', [ownerId, id]);
+  if (!mine[0]) throw new ProjectError('not_found', 'Project not found.');
+  if (!Number.isInteger(input.expectedRevision) || input.expectedRevision < 1) throw new ProjectError('invalid', 'Missing revision.');
+  const json = JSON.stringify(input.site ?? null);
+  if (json.length > MAX_SITE_BYTES) throw new ProjectError('too_large', 'This website is too large to save.');
+  const v = validateWebsite(input.site);
+  const errors = v.issues.filter((i) => i.severity === 'error');
+  if (!v.website || errors.length > 0) throw new ProjectError('invalid', 'The website has problems and was not saved.', { issues: errors.slice(0, 5).map((i) => `${i.path}: ${i.message}`) });
+  const rows = await db.query<FullRow>(
+    `update projects set site = $4::jsonb, site_version = $5::int,
+        meta = meta || jsonb_build_object('editor', jsonb_build_object('editedAt', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))),
+        revision = revision + 1, updated_at = now()
+      where owner_id = $1 and id = $2 and revision = $3 returning ${FULL_COLS}`,
+    [ownerId, id, input.expectedRevision, JSON.stringify(v.website), SITE_VERSION],
+  );
+  if (rows[0]) return toProject(rows[0]);
+  const current = await getProject(db, ownerId, id);
+  if (!current) throw new ProjectError('not_found', 'Project not found.');
+  throw new ProjectError('conflict', 'This project was changed somewhere else.', { currentRevision: current.revision, updatedAt: current.updatedAt });
+}
+
+/** Throws the editor's changes away and rebuilds the website from the configurator answers. Explicit, never automatic. */
+export async function resetSite(db: Db, ownerId: string, id: string, expectedRevision: number): Promise<Project> {
+  const current = await getProject(db, ownerId, id);
+  if (!current) throw new ProjectError('not_found', 'Project not found.');
+  const loaded = migrateWizard(current.wizard, current.wizardVersion);
+  if (!loaded.ok) throw new ProjectError('invalid', 'The configurator answers for this project cannot be read.');
+  const d = derive(loaded.wizard);
+  if (d.site === null) throw new ProjectError('invalid', 'The configurator answers are not complete enough to build a website.');
+  const rows = await db.query<FullRow>(
+    `update projects set site = $4::jsonb, site_version = $5::int, meta = meta - 'editor', revision = revision + 1, updated_at = now()
+      where owner_id = $1 and id = $2 and revision = $3 returning ${FULL_COLS}`,
+    [ownerId, id, expectedRevision, JSON.stringify(d.site), d.siteVersion],
+  );
+  if (rows[0]) return toProject(rows[0]);
+  throw new ProjectError('conflict', 'This project was changed somewhere else.', { currentRevision: current.revision, updatedAt: current.updatedAt });
 }

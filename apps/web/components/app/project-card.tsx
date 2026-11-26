@@ -25,8 +25,12 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
         <div><dt className="inline">Updated </dt><dd className="inline"><time dateTime={p.updatedAt}>{formatDate(p.updatedAt)}</time></dd></div></div>
       </dl>
       <div className="mt-5 flex items-center justify-between gap-3 pt-1">
-        <Link href={`/dashboard/projects/${p.id}`} className={buttonClass('secondary', 'min-w-0 flex-1 sm:flex-none')}>Open<span className="sr-only"> {p.name}</span></Link>
-        <ProjectActions id={p.id} name={p.name} archived={p.status === 'archived'} />
+        {p.hasSite && p.status !== 'archived' ? (
+          <Link href={`/editor/${p.id}`} className={buttonClass('primary', 'min-w-0 flex-1 sm:flex-none')}>Edit website<span className="sr-only"> {p.name}</span></Link>
+        ) : (
+          <Link href={`/dashboard/projects/${p.id}`} className={buttonClass('secondary', 'min-w-0 flex-1 sm:flex-none')}>Open<span className="sr-only"> {p.name}</span></Link>
+        )}
+        <ProjectActions id={p.id} name={p.name} archived={p.status === 'archived'} hasSite={p.hasSite} />
       </div>
     </article>
   );
