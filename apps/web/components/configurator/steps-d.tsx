@@ -4,6 +4,7 @@ import { CAPABILITIES, getCategory, getTemplate, type Action, type GeneratedProj
 import { PALETTES, STYLES, defaultRegistry } from '@saitify/engine';
 import type { Dispatch, ReactNode } from 'react';
 import { StepIntro } from './fields';
+import type { SyncStatus } from './use-project-sync';
 
 function Group({ title, step, dispatch, children }: { title: string; step: StepId; dispatch: Dispatch<Action>; children: ReactNode }) {
   return (
@@ -26,9 +27,13 @@ const Row = ({ label, children }: { label: string; children: ReactNode }) => (
 );
 const none = <span className="text-midnight/50">Not set</span>;
 
+export type FinishProps =
+  | { mode: 'project'; projectId: string; status: SyncStatus; onOpen: () => void; opening: boolean }
+  | { mode: 'guest'; auth: 'unknown' | 'user' | 'guest'; done: boolean; saving: boolean; error: string | null; onFinish: () => void; onSave: () => void; onBeforeAuth: () => void };
+
 export function ReviewStep({
-  state, dispatch, project, headingRef, done, onFinish,
-}: { state: WizardState; dispatch: Dispatch<Action>; project: GeneratedProject; headingRef: React.Ref<HTMLHeadingElement>; done: boolean; onFinish: () => void }) {
+  state, dispatch, project, headingRef, finish,
+}: { state: WizardState; dispatch: Dispatch<Action>; project: GeneratedProject; headingRef: React.Ref<HTMLHeadingElement>; finish: FinishProps }) {
   const cat = getCategory(state.category);
   const tpl = getTemplate(state.templateId);
   const caps = CAPABILITIES.filter((c) => state.capabilities.includes(c.id));
@@ -99,19 +104,42 @@ export function ReviewStep({
       <div className="mt-8 rounded-3xl bg-midnight p-6 text-white sm:p-8">
         {!project.valid ? (
           <p role="alert">Something in your answers needs attention before we can create the configuration. Use Back to check the earlier steps.</p>
-        ) : done ? (
+        ) : finish.mode === 'project' ? (
+          <div data-testid="project-finish">
+            <h2 className="text-2xl font-semibold">Your project is saved automatically</h2>
+            <p className="mt-3 max-w-2xl text-white/80">Every change you make is saved to your account. Open the project page to see it, duplicate it or come back to it later.</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button type="button" onClick={finish.onOpen} disabled={finish.opening} className="inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                {finish.opening ? 'Saving…' : 'Save and open my project'}
+              </button>
+              <button type="button" onClick={download} className="inline-flex min-h-12 items-center rounded-full border border-white/40 px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Download configuration (JSON)</button>
+            </div>
+          </div>
+        ) : finish.done ? (
           <div data-testid="finished">
             <h2 className="text-2xl font-semibold">Your website configuration is ready</h2>
-            <p className="mt-3 max-w-2xl text-white/80">It passed the website engine&rsquo;s validation and is shown in the preview. Publishing, accounts and the visual editor are not part of this version, so for now you can keep the configuration as a file. Your draft stays on this device until you start over.</p>
-            <button type="button" onClick={download} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-              Download configuration (JSON)
-            </button>
+            {finish.auth === 'user' ? (
+              <>
+                <p className="mt-3 max-w-2xl text-white/80" role="status">{finish.saving ? 'Saving your website to your account…' : 'We could not save it yet. Your answers are still here.'}</p>
+                {finish.error ? <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-900">{finish.error}</p> : null}
+                {!finish.saving ? <button type="button" onClick={finish.onSave} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Try saving again</button> : null}
+              </>
+            ) : (
+              <>
+                <p className="mt-3 max-w-2xl text-white/80">It passed the website engine&rsquo;s validation and is shown in the preview. Save it to a free account to keep it, come back later and continue where you left off. Until then your draft stays on this device.</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <a href={`/register?next=${encodeURIComponent('/create/save')}`} onClick={finish.onBeforeAuth} className="inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Create a free account to save it</a>
+                  <a href={`/login?next=${encodeURIComponent('/create/save')}`} onClick={finish.onBeforeAuth} className="inline-flex min-h-12 items-center rounded-full border border-white/40 px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">I already have an account</a>
+                  <button type="button" onClick={download} className="inline-flex min-h-12 items-center rounded-full px-4 font-semibold text-white underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Download configuration (JSON)</button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div>
             <h2 className="text-2xl font-semibold">Everything looks good</h2>
             <p className="mt-3 max-w-2xl text-white/80">Create the configuration for your website. We build it with the same engine that draws the live preview.</p>
-            <button type="button" onClick={onFinish} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet to-blue px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            <button type="button" onClick={finish.onFinish} className="mt-5 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet to-blue px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
               Create my website configuration
             </button>
           </div>

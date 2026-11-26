@@ -9,3 +9,6 @@ Done on branch `phase-2-engine` (stacked on phase 1). See `PHASE2.md`.
 
 ## Phase 3 — Universal Website Configurator
 Done: `/create` wizard, catalog, generator, drafts, live preview. See docs/PHASE3.md.
+
+## Phase 4 — Accounts & Projects
+Done on branch `phase-4-accounts-projects`: auth, account settings, dashboard, persistent versioned projects, guest-to-account configurator flow. See docs/PHASE4.md.

@@ -12,7 +12,7 @@ export function Logo({ light = false }: { light?: boolean }) {
     <Link
       href="/"
       aria-label="Saitify home"
-      className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet"
+      className="inline-flex min-h-11 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet"
     >
       <LogoMark />
       <span

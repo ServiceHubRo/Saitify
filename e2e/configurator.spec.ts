@@ -6,7 +6,7 @@ const STEPS = ['category', 'idea', 'info', 'pages', 'features', 'design', 'templ
 const draft = (step: string, extra: Record<string, unknown> = {}) =>
   JSON.stringify({
     v: 1,
-    savedAt: 1,
+    savedAt: Date.now(),
     state: {
       step,
       category: 'business',

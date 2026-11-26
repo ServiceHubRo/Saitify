@@ -26,7 +26,7 @@ export function useFit(designWidth: number) {
   return { ref: setEl, scale };
 }
 
-export function Preview({ project }: { project: GeneratedProject }) {
+export function Preview({ project }: { project: Pick<GeneratedProject, 'website' | 'config'> }) {
   const [device, setDevice] = useState<DeviceId>('desktop');
   const [slug, setSlug] = useState<string | undefined>(undefined);
   const width = DEVICES.find((d) => d.id === device)!.width;

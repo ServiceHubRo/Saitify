@@ -1,0 +1,3 @@
+/** Browser-safe exports (no Node APIs, no database). Imported by client components. */
+export { passwordRules, LIMITS, safeNext, type PasswordRule } from './auth/validation';
+export { STATUS_INFO, displayStatus, type DisplayStatus } from './projects/status';
