@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { CtaBand, PageHero, Section, Badge } from '../../../components/ui';
+import { CtaBand, PageHero, Section } from '../../../components/ui';
 import { JOURNEY } from '../../../lib/site';
 
 export const metadata: Metadata = {
   title: 'How it works',
   description:
-    'The Saitlify journey from idea to published website, in six clear steps. The website creator is in development.',
+    'The Saitlify journey from idea to published website, in six clear steps.',
   alternates: { canonical: '/how-it-works' },
   openGraph: { url: '/how-it-works', title: 'How it works | Saitlify' },
 };
@@ -16,7 +16,7 @@ export default function HowItWorksPage() {
       <PageHero
         eyebrow="How it works"
         title="From idea to published website"
-        text="Six steps, designed to be calm and clear. This is the experience we are building. It is not available yet."
+        text="Six calm, clear steps. This is how it works today."
       />
 
       <Section labelledBy="journey-heading">
@@ -36,10 +36,7 @@ export default function HowItWorksPage() {
                 {i + 1}
               </span>
               <div className="rounded-2xl border border-midnight/10 bg-white p-6 shadow-sm sm:flex-1 sm:p-7">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="text-xl font-semibold text-midnight">{step.title}</h3>
-                  <Badge tone="neutral">Planned</Badge>
-                </div>
+                <h3 className="text-xl font-semibold text-midnight">{step.title}</h3>
                 <p className="mt-3 text-base leading-relaxed text-midnight/70">{step.text}</p>
               </div>
             </li>

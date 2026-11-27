@@ -95,3 +95,14 @@ export async function expectNoOverflow(page: Page) {
 
 /** The page's own alert, not Next.js's invisible route announcer (which also has role=alert). */
 export const alertOf = (page: Page) => page.locator('[role="alert"]:not(#__next-route-announcer__)');
+
+/** Signs in a fresh account through the API (fast). The browser context shares the cookie, so `page.goto` is then signed in. */
+export async function signedIn(page: Page, baseURL = 'http://localhost:3100') {
+  const email = uniqueEmail('api');
+  const origin = { origin: baseURL };
+  const reg = await page.request.post(`${baseURL}/api/auth/register`, { data: { name: 'Api User', email, password: PASSWORD, confirm: PASSWORD, acceptTerms: true }, headers: origin });
+  expect(reg.status(), await reg.text()).toBe(201);
+  const login = await page.request.post(`${baseURL}/api/auth/login`, { data: { email, password: PASSWORD }, headers: origin });
+  expect(login.status(), await login.text()).toBeLessThan(300);
+  return email;
+}

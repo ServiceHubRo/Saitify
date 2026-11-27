@@ -30,9 +30,9 @@ export function LegalPage({
               role="note"
               className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-[15px] leading-relaxed text-amber-950"
             >
-              <strong>Draft, not final.</strong> This page is a structure with placeholders. Business
-              details are still missing and the text has not had a legal review. It must be completed
-              and reviewed before Saitlify launches.
+              <strong>Draft, pending legal review.</strong> The factual statements below describe what the
+              service does today. Highlighted placeholders are business or legal details that still have to be
+              supplied, and the whole page must be reviewed by a qualified person before a public launch.
             </div>
           </div>
         </Container>

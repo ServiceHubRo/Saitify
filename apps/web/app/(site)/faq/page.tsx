@@ -6,7 +6,7 @@ import { FAQ_GROUPS } from '../../../lib/site';
 export const metadata: Metadata = {
   title: 'FAQ',
   description:
-    'Honest answers about Saitlify: getting started, coding, editing, templates, mobile, publishing, domains, pricing and support.',
+    'Answers about Saitlify: getting started, coding, editing, templates, mobile, publishing, domains, pricing and support.',
   alternates: { canonical: '/faq' },
   openGraph: { url: '/faq', title: 'FAQ | Saitlify' },
 };
@@ -17,7 +17,7 @@ export default function FaqPage() {
       <PageHero
         eyebrow="FAQ"
         title="Frequently asked questions"
-        text="Saitlify is in development, so some answers describe plans. We say so wherever that is the case."
+        text="Saitlify is in beta. Where something is not available yet, the answer says so."
       />
       <Section labelledBy="faq-groups">
         <h2 id="faq-groups" className="sr-only">
@@ -32,7 +32,7 @@ export default function FaqPage() {
           ))}
         </div>
       </Section>
-      <CtaBand title="Still have a question?" text="Send us a message, or request early access if you are ready to start." />
+      <CtaBand title="Still have a question?" text="Send us a message and we will reply by email." />
     </>
   );
 }

@@ -91,7 +91,7 @@ test.describe('sign in, sessions and protected routes', () => {
     await expect(page).toHaveURL(/\/dashboard$/);
   });
 
-  for (const path of ['/dashboard', '/account', '/dashboard/projects/00000000-0000-4000-8000-000000000000', '/edit/00000000-0000-4000-8000-000000000000', '/create/save']) {
+  for (const path of ['/dashboard', '/account', '/dashboard/projects/00000000-0000-4000-8000-000000000000', '/edit/00000000-0000-4000-8000-000000000000', '/editor/00000000-0000-4000-8000-000000000000', '/create', '/create/save', '/billing']) {
     test(`protected route ${path} sends visitors to sign in and brings them back`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));

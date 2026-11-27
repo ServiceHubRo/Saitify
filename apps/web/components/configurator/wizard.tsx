@@ -4,6 +4,7 @@ import {
   createInitialState,
   generateProject,
   getSteps,
+  getTemplate,
   maxReachableIndex,
   parseDraft,
   reduce,
@@ -17,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { LogoMark } from '../logo';
 import { call } from '../app/api-client';
-import { clearGuestDraft, destinationFor, pendingKey, projectKey, readGuestDraft, saveDraftToAccount, DRAFT_KEY } from './draft-storage';
+import { clearGuestDraft, destinationFor, projectKey, readGuestDraft, saveDraftToAccount, DRAFT_KEY } from './draft-storage';
 import { Preview } from './preview';
 import { CategoryStep, IdeaStep, InfoStep } from './steps-a';
 import { FeaturesStep, PagesStep } from './steps-b';
@@ -32,7 +33,8 @@ const isPristine = (s: WizardState) => JSON.stringify({ ...s, step: 'category' }
 
 const SYNC_TEXT: Record<SyncStatus, string> = { saved: 'All changes saved', dirty: 'Unsaved changes…', saving: 'Saving…', error: 'Could not save', conflict: 'Not saved: changed elsewhere', 'signed-out': 'Not saved: signed out' };
 
-export function Wizard({ project }: { project?: ProjectSeed }) {
+/** `initialTemplate`: a template chosen on the templates page; it pre-selects the type and the design on a fresh start. */
+export function Wizard({ project, initialTemplate }: { project?: ProjectSeed; initialTemplate?: string }) {
   const router = useRouter();
   const isProject = Boolean(project);
   const [state, dispatch] = useReducer(reduce, project?.state, (p) => p ?? createInitialState());
@@ -40,6 +42,7 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
   const [restored, setRestored] = useState(false);
   const [expired, setExpired] = useState(false);
   const [recovered, setRecovered] = useState(false);
+  // /create is only served to signed-in users. 'guest' therefore means the session ended while the page was open.
   const [auth, setAuth] = useState<'unknown' | 'user' | 'guest'>('unknown');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -74,9 +77,15 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
     }
     try {
       const { draft, expired: wasExpired } = readGuestDraft();
+      const tpl = getTemplate(initialTemplate);
       if (draft && !isPristine(draft.state)) {
         dispatch({ type: 'hydrate', state: draft.state });
         setRestored(true);
+      } else if (tpl) {
+        // Came from "Use this template": start with its type and design chosen, at the first question.
+        dispatch({ type: 'setCategory', category: tpl.categories[0]! });
+        dispatch({ type: 'selectTemplate', id: tpl.id });
+        dispatch({ type: 'goTo', step: 'idea' });
       } else if (wasExpired) {
         window.localStorage.removeItem(DRAFT_KEY);
         setExpired(true);
@@ -88,7 +97,7 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
     }
     setReady(true);
     void call<{ user: unknown }>('/api/session', { method: 'GET' }).then((r) => setAuth(r.ok && r.data.user ? 'user' : r.ok ? 'guest' : 'unknown'));
-  }, [project]);
+  }, [project, initialTemplate]);
 
   useEffect(() => {
     if (!ready || isProject) return;
@@ -161,7 +170,7 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
   };
   const finishGuest = () => {
     setDone(true);
-    if (auth === 'user') void saveToAccount();
+    if (auth !== 'guest') void saveToAccount();
   };
   const openProject = async () => {
     if (!project || opening) return;
@@ -200,16 +209,16 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
                 ) : (
                   <>
                     {!isPristine(state) && ready ? (
-                      auth === 'user' ? (
-                        <button type="button" onClick={() => void saveToAccount()} disabled={saving} className="min-h-11 rounded-lg bg-midnight px-3 text-sm font-semibold text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet">{saving ? 'Saving…' : 'Save to my account'}</button>
+                      auth === 'guest' ? (
+                        <a href="/login?next=%2Fcreate" className="inline-flex min-h-11 items-center rounded-lg bg-midnight px-3 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet">Sign in to save</a>
                       ) : (
-                        <a href={`/register?next=${encodeURIComponent('/create/save')}`} onClick={() => pendingKey()} className="inline-flex min-h-11 items-center rounded-lg bg-midnight px-3 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet">Save to account</a>
+                        <button type="button" onClick={() => void saveToAccount()} disabled={saving} className="min-h-11 rounded-lg bg-midnight px-3 text-sm font-semibold text-white disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet">{saving ? 'Saving…' : 'Save to my account'}</button>
                       )
                     ) : null}
                     <button type="button" onClick={() => setConfirmReset(true)} disabled={isPristine(state)} className="min-h-11 rounded-lg border border-midnight/20 px-3 text-sm font-medium text-midnight hover:border-violet disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-violet">Start over</button>
                   </>
                 )}
-                <Link href="/" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-midnight/75 hover:text-violet focus-visible:outline-2 focus-visible:outline-violet">Exit</Link>
+                <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-midnight/75 hover:text-violet focus-visible:outline-2 focus-visible:outline-violet">Exit</Link>
               </>
             )}
           </div>
@@ -288,7 +297,7 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
                     dispatch={dispatch}
                     project={finalProject}
                     headingRef={headingRef}
-                    finish={project ? { mode: 'project', projectId: project.id, status: sync.status, onOpen: () => void openProject(), opening } : { mode: 'guest', auth, done, saving, error: saveError, onFinish: finishGuest, onSave: () => void saveToAccount(), onBeforeAuth: () => void pendingKey() }}
+                    finish={project ? { mode: 'project', projectId: project.id, status: sync.status, onOpen: () => void openProject(), opening } : { mode: 'guest', auth, done, saving, error: saveError, onFinish: finishGuest, onSave: () => void saveToAccount() }}
                   />
                 )}
               </div>

@@ -27,8 +27,10 @@ for (const route of ROUTES) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
 
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toBeVisible();
+    // Website previews drawn by the engine are decorative (aria-hidden, inert) and may contain their own headings.
+    const h1s = page.locator('h1:not([aria-hidden="true"] h1)');
+    await expect(h1s).toHaveCount(1);
+    await expect(h1s).toBeVisible();
 
     expect(await page.title()).toMatch(/Saitlify/);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.{40,}/);
@@ -119,17 +121,18 @@ test('FAQ accordion toggles', async ({ page }) => {
   await expect(first).not.toHaveAttribute('open', '');
 });
 
-test('CTA opens the configurator', async ({ page }) => {
+test('"Create your website" asks visitors to sign in first, then opens the configurator', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your website' }).first().click();
-  await expect(page).toHaveURL(/\/create$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'What do you want to create?' })).toBeVisible();
+  await expect(page).toHaveURL(/\/login\?next=%2Fcreate$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Welcome back' })).toBeVisible();
 });
 
-test('early access request page still works', async ({ page }) => {
-  await page.goto('/contact?topic=early-access');
-  await expect(page.getByRole('heading', { level: 1, name: 'Get early access' })).toBeVisible();
-  await expect(page.getByLabel('Subject')).toHaveValue('Early access request');
+test('contact page offers a pricing question topic and no longer mentions early access', async ({ page }) => {
+  await page.goto('/contact?topic=pricing');
+  await expect(page.getByRole('heading', { level: 1, name: 'Ask about pricing' })).toBeVisible();
+  await expect(page.getByLabel('Subject')).toHaveValue('Pricing question');
+  await expect(page.getByText(/early access/i)).toHaveCount(0);
 });
 
 test('pricing page shows only real plans: Free is always there, nothing invented', async ({ page }) => {
@@ -177,6 +180,17 @@ test('sitemap, robots and social image are served', async ({ request }) => {
   const og = await request.get('/opengraph-image');
   expect(og.status()).toBe(200);
   expect(og.headers()['content-type']).toContain('image/png');
+});
+
+test('the application sends its security headers and does not advertise the framework', async ({ request }) => {
+  for (const path of ['/', '/login', '/pricing']) {
+    const h = (await request.get(path)).headers();
+    expect(h['strict-transport-security'], path).toContain('max-age=');
+    expect(h['content-security-policy'], path).toContain("frame-ancestors 'none'");
+    expect(h['x-content-type-options'], path).toBe('nosniff');
+    expect(h['x-frame-options'], path).toBe('DENY');
+    expect(h['x-powered-by'], path).toBeUndefined();
+  }
 });
 
 test('unknown route shows the 404 page', async ({ page }) => {

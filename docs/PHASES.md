@@ -20,8 +20,10 @@ Done on branch `phase-5-visual-editor`: `/editor/[id]`, `packages/editor`, autos
 Done on branch `phase-6-publishing` (stacked on phase 5): sites/deployments, subdomains, public rendering, versions, rollback, unpublish, SEO. See docs/PHASE6.md. Phase 7 not started (awaiting approval).
 
 ## Phase 8 — Advanced Modules
-Done on branch `claude/saitlify-phase-8-modules-9oed7p` (merged in PR #10): module registry and lifecycle, Forms, Blog, Online store, Bookings, Events, Directory, Memberships, Online courses; configurator, editor, publishing and entitlement integration. See docs/PHASE8.md. Phase 9 not started.
-Done on branch `phase-6-publishing` (stacked on phase 5): sites/deployments, subdomains, public rendering, versions, rollback, unpublish, SEO. See docs/PHASE6.md.
+Done on branch `claude/saitlify-phase-8-modules-9oed7p` (merged in PR #10): module registry and lifecycle, Forms, Blog, Online store, Bookings, Events, Directory, Memberships, Online courses; configurator, editor, publishing and entitlement integration. See docs/PHASE8.md. 
 
 ## Phase 7 — Billing & Subscriptions
 Done on branch `phase-7-billing` (stacked on phase 6): rebrand to Saitlify, Stripe Checkout/Portal/webhooks, plans and server-enforced limits, admin plan management. See docs/PHASE7.md. Phase 8 not started (awaiting approval).
+
+## Phase 9 — Production readiness and beta preparation
+Done on branch `claude/saitlify-phase-9-beta-readiness` (**not merged, not deployed**): audit first (`PHASE9-AUDIT.md`), authentication required to build (edge + server + API), Stripe subscription canceled on account deletion, hardened contact endpoint, security headers, structured logging, honest marketing site with real templates and an interactive homepage product demo, accessibility and layout-stability fixes, truthful draft legal pages, tests (axe, demo, stability, deletion). Report: `PHASE9.md`; launch list: `BETA-CHECKLIST.md`; interface review: `PHASE9-UX.md`. Status: READY FOR INTERNAL TESTING.

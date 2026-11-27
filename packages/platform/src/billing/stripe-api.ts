@@ -1,3 +1,4 @@
+import { logEvent } from '../log';
 import Stripe from 'stripe';
 
 /**
@@ -58,7 +59,7 @@ function wrap<T>(run: () => Promise<T>): Promise<T> {
   return run().catch((e: unknown) => {
     const type = (e as { type?: string }).type ?? '';
     // Log the error class only: Stripe errors can echo request details.
-    console.error('[saitify] stripe request failed:', type || (e instanceof Error ? e.name : 'unknown'));
+    logEvent('error', 'stripe_request_failed', { stripeType: type || undefined }, e);
     if (type === 'StripeAuthenticationError' || type === 'StripePermissionError') throw new StripeFailure('config', 'Billing is not configured correctly.');
     if (type === 'StripeInvalidRequestError' || type === 'StripeCardError') throw new StripeFailure('invalid', 'The payment provider rejected this request.');
     throw new StripeFailure('unavailable', 'The payment provider is not reachable right now. Please try again in a moment.');

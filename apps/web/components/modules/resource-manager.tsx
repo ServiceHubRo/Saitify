@@ -208,7 +208,7 @@ export function ResourceManager({ projectId, kind, currency = 'RON', ctx, onOpen
                   <span className="block truncate text-[15px] font-semibold text-midnight hover:text-violet">{item.title}</span>
                   <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-midnight/65">
                     {def.listFields.filter((k) => k !== 'title').map((k) => (
-                      <span key={k} className="inline-flex items-center gap-1.5">{k !== 'status' ? <span className="text-midnight/50">{COLUMN_LABEL[k] ?? k}:</span> : null}{cell(kind, k, item, currency, refs)}</span>
+                      <span key={k} className="inline-flex items-center gap-1.5">{k !== 'status' ? <span className="text-midnight/65">{COLUMN_LABEL[k] ?? k}:</span> : null}{cell(kind, k, item, currency, refs)}</span>
                     ))}
                   </span>
                 </button>

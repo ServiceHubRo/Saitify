@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { logEvent } from '../log';
 import { validateWebsite, type Website } from '@saitify/engine';
 import { isUniqueViolation } from '../auth/service';
 import type { Db } from '../db/types';
@@ -276,7 +277,7 @@ async function runPipeline(db: Db, deps: PublishDeps, site: SiteRow, deploymentI
     try {
       pages = await deps.build(website, base);
     } catch (e) {
-      console.error('[saitify] build failed:', e instanceof Error ? e.name : 'unknown');
+      logEvent('error', 'publish_build_failed', { deploymentId }, e);
       await failDeployment(db, deploymentId, 'deploying', 'One of your pages could not be built. Your live website was not changed.', 'build_failed');
       return await summaryOf(db, deploymentId, site);
     }
@@ -317,7 +318,7 @@ async function runPipeline(db: Db, deps: PublishDeps, site: SiteRow, deploymentI
       await failDeployment(db, deploymentId, 'cancelled', 'This publication was cancelled. Your live website was not changed.', 'cancelled');
       return await summaryOf(db, deploymentId, site);
     }
-    console.error('[saitify] publish failed:', e instanceof Error ? e.name : 'unknown');
+    logEvent('error', 'publish_failed', { deploymentId }, e);
     await failDeployment(db, deploymentId, 'unknown', 'Something went wrong while publishing. Your live website was not changed. Please try again.', 'unexpected');
     return await summaryOf(db, deploymentId, site);
   }

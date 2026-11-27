@@ -1,4 +1,4 @@
-import { checkSubdomainFormat, hostingFromEnv, subdomainFromHost } from '@saitify/platform/hosting';
+import { checkSubdomainFormat, hostingFromEnv, isPrivatePath, loginUrlFor, sessionCookieName, subdomainFromHost } from '@saitify/platform/hosting';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
@@ -8,6 +8,13 @@ import { NextResponse, type NextRequest } from 'next/server';
  * the public renderer, so dashboard, editor and API routes can never be reached through a website's address.
  * The platform's own hosts (the base domain itself, www, app, …) and any other host pass straight through.
  */
+/**
+ * Baseline policy for the application's own pages. It closes whole classes of attack (no plugins, no framing, no <base> hijacking,
+ * forms post back to this site only) without restricting scripts: a script-src policy needs per-request nonces and is tracked in
+ * docs/BETA-CHECKLIST.md. Published websites (`/s/...`) are never given this one: they send their own, much stricter policy.
+ */
+const APP_CSP = "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'";
+
 export function proxy(req: NextRequest) {
   const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://saitify.ro').replace(/\/$/, '');
   const hosting = hostingFromEnv(process.env, appUrl);
@@ -34,7 +41,22 @@ export function proxy(req: NextRequest) {
     const p = req.nextUrl.pathname;
     if (p === '/s' || p.startsWith('/s/')) return new NextResponse('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
-  return NextResponse.next({ request: { headers } });
+
+  // Building, editing, saving, managing, publishing and billing need an account. A request without any session cookie is sent
+  // to sign in here, at the edge, with a real 307 (not a loading page), and returns to where it was going afterwards. This is
+  // only the first gate: pages and API routes still validate the session on the server, and a forged cookie gets nothing.
+  const path = req.nextUrl.pathname;
+  if (isPrivatePath(path) && !req.cookies.get(sessionCookieName(appUrl.startsWith('https://')))?.value) {
+    const to = req.nextUrl.clone();
+    to.pathname = '/login';
+    to.search = loginUrlFor(path, req.nextUrl.search).slice('/login'.length);
+    const res = NextResponse.redirect(to, 307);
+    res.headers.set('Cache-Control', 'no-store');
+    return res;
+  }
+  const res = NextResponse.next({ request: { headers } });
+  if (path !== '/s' && !path.startsWith('/s/')) res.headers.set('Content-Security-Policy', APP_CSP);
+  return res;
 }
 
 export const config = { matcher: ['/((?!_next/static|_next/image).*)'] };

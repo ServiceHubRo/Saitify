@@ -98,7 +98,7 @@ export function Badge({
 }) {
   const styles = {
     violet: 'bg-violet/10 text-violet',
-    blue: 'bg-blue/10 text-blue',
+    blue: 'bg-blue/10 text-midnight',
     neutral: 'bg-midnight/5 text-midnight/70',
   }[tone];
   return (
@@ -141,7 +141,7 @@ export function PageHero({
 
 export function CtaBand({
   title = 'Your website starts with an idea.',
-  text = 'Describe your idea, answer a few simple questions and see your website take shape. Publishing and accounts are coming next.',
+  text = 'Create a free account, answer a few simple questions and see your website take shape. No card needed.',
 }: {
   title?: string;
   text?: string;
@@ -165,7 +165,7 @@ export function CtaBand({
             <p className="mt-4 text-lg text-lavender">{text}</p>
             <div className="mt-8">
               <ButtonLink href="/create" variant="light">
-                Create your website
+                Start free
               </ButtonLink>
             </div>
           </div>

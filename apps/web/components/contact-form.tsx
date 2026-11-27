@@ -87,7 +87,9 @@ export function ContactForm({ initialSubject = '' }: { initialSubject?: string }
       setServerMessage(
         body.error === 'not_configured'
           ? 'Your message was not sent: this form is not connected to email yet. Please try again later.'
-          : 'Your message was not sent. Please check your details and try again in a moment.',
+          : res.status === 429
+            ? 'You have sent several messages in a short time. Please wait a while before sending another.'
+            : 'Your message was not sent. Please check your details and try again in a moment.',
       );
       setStatus('error');
     } catch {

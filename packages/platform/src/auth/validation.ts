@@ -1,3 +1,5 @@
+import { isPrivatePath } from './routes';
+
 export const LIMITS = { name: { min: 1, max: 100 }, email: { max: 254 }, password: { min: 10, max: 128 } } as const;
 export const TERMS_VERSION = '2026-11-draft';
 
@@ -61,6 +63,6 @@ export function safeNext(value: unknown, fallback = '/dashboard'): string {
   } catch {
     return fallback;
   }
-  const allowed = ['/dashboard', '/create', '/account', '/edit', '/editor'];
-  return allowed.some((p) => path === p || path.startsWith(`${p}/`)) ? value : fallback;
+  // Any private page is a valid destination after signing in (the admin page still checks the role on the server).
+  return isPrivatePath(path) ? value : fallback;
 }

@@ -1,5 +1,5 @@
 import 'server-only';
-import { BillingConfigError, DatabaseNotConfiguredError, ProjectError, SchemaNotReadyError, type Ctx, type SessionInfo } from '@saitify/platform';
+import { BillingConfigError, DatabaseNotConfiguredError, logEvent, newRequestId, ProjectError, SchemaNotReadyError, type Ctx, type SessionInfo } from '@saitify/platform';
 import { NextResponse } from 'next/server';
 import { appUrl, getCtx } from './platform';
 import { currentSession } from './session';
@@ -76,23 +76,33 @@ export function api<P = Record<string, never>>(opts: { auth?: boolean; write?: b
       const params = await route.params;
       return await handler({ req, ctx, ip: clientIp(req), body, session, params });
     } catch (e) {
-      return errorResponse(e);
+      return errorResponse(e, { route: routeOf(req), method: req.method });
     }
   };
 }
 
-export function errorResponse(e: unknown): Response {
+/** `/api/projects/<uuid>/publish` → `/api/projects/:id/publish`, so log lines group by route instead of by project. */
+export const routeOf = (req: Request): string => {
+  try {
+    return new URL(req.url).pathname.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id').slice(0, 120);
+  } catch {
+    return 'unknown';
+  }
+};
+
+export function errorResponse(e: unknown, where: { route?: string; method?: string } = {}): Response {
   if (e instanceof ProjectError) {
     const status = e.code === 'not_found' ? 404 : e.code === 'conflict' ? 409 : e.code === 'too_large' ? 413 : e.code === 'limit' ? 409 : 422;
     return fail(status, { code: e.code, message: e.message, details: e.details, ...(e.details?.field ? { fields: { [String(e.details.field)]: e.message } } : {}) });
   }
   if (e instanceof BillingConfigError) return fail(503, { code: 'billing_unavailable', message: 'Paid plans cannot be purchased yet because billing is still being set up. Your account and the Free plan are unaffected.' });
+  const rid = newRequestId();
   if (e instanceof DatabaseNotConfiguredError || e instanceof SchemaNotReadyError) {
-    console.error('[saitify] database unavailable:', e.name);
-    return fail(503, { code: 'service_unavailable', message: 'Accounts are temporarily unavailable. Please try again later.' });
+    logEvent('error', 'database_unavailable', { rid, ...where }, e);
+    return fail(503, { code: 'service_unavailable', message: 'Accounts are temporarily unavailable. Please try again later.', details: { reference: rid } });
   }
-  console.error('[saitify] unexpected error:', e instanceof Error ? e.name : 'unknown'); // never log request data, tokens or SQL
-  return fail(500, { code: 'server_error', message: 'Something went wrong on our side. Your data is safe: please try again.' });
+  logEvent('error', 'unexpected_error', { rid, ...where }, e); // never the message, the body or the SQL
+  return fail(500, { code: 'server_error', message: `Something went wrong on our side. Your data is safe: please try again. If it keeps happening, quote reference ${rid}.`, details: { reference: rid } });
 }
 
 export const str = (v: unknown, max = 1000) => (typeof v === 'string' ? v.slice(0, max) : '');

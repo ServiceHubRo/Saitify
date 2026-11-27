@@ -1,11 +1,11 @@
 import 'server-only';
-import { getSession, type SessionInfo } from '@saitify/platform';
+import { getSession, sessionCookieName, type SessionInfo } from '@saitify/platform';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { cookiesAreSecure, getCtx } from './platform';
 
-export const SESSION_COOKIE = () => (cookiesAreSecure() ? '__Host-saitify_session' : 'saitify_session');
+export const SESSION_COOKIE = () => sessionCookieName(cookiesAreSecure());
 
 /** One lookup per request, shared by layouts, pages and handlers. */
 export const currentSession = cache(async (): Promise<SessionInfo | null> => {

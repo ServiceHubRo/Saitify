@@ -248,6 +248,29 @@ export async function setCancel(db: Db, stripe: StripeApi, userId: string, input
   return { message: input.cancel ? `Your subscription will end${end ? ` on ${end}` : ' at the end of the period'}. You keep your paid features until then, and nothing is deleted.` : 'Your subscription will renew as usual.' };
 }
 
+/**
+ * Called while an account is being deleted, after the password was checked. Deleting the account removes our records of the
+ * subscription, so Stripe must stop billing first: the subscription is canceled immediately. If it cannot be canceled (Stripe not
+ * configured, unreachable, or refusing), the deletion is refused and nothing is removed, so a customer is never left being charged
+ * for an account that no longer exists. Throws ProjectError with the reason shown to the person.
+ */
+const BILLABLE = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'];
+export async function cancelBeforeAccountDeletion(db: Db, stripe: StripeApi | null, userId: string): Promise<void> {
+  const sub = await getSubscription(db, userId);
+  if (!sub?.stripeSubscriptionId || !BILLABLE.includes(sub.status)) return;
+  const unavailable = new ProjectError('invalid', 'We could not cancel your subscription right now, so your account was not deleted. This protects you from being charged for an account that no longer exists. Cancel your plan on the Billing page, or try again in a few minutes.', { code: 'subscription_cancel_failed' });
+  if (!stripe) throw unavailable;
+  try {
+    await stripe.cancelNow({ subscriptionId: sub.stripeSubscriptionId, idempotencyKey: `deleteacct:${userId}:${sub.stripeSubscriptionId}` });
+  } catch {
+    // It may already have ended on Stripe's side (then there is nothing left to bill). Ask Stripe instead of guessing from the
+    // error text; if it is still live, or Stripe cannot be asked, the account is kept.
+    const now = await stripe.retrieveSubscription(sub.stripeSubscriptionId).catch(() => null);
+    if (now && (now.status === 'canceled' || now.status === 'incomplete_expired')) return;
+    throw unavailable;
+  }
+}
+
 /* ---------------------------------------------------------------------- admin */
 
 /** Reads the mapped Stripe prices and stores their real amounts. Refuses mismatched intervals or currencies. */

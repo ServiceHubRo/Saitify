@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { defaultRegistry, validateWebsite, type Page, type Website } from '@saitify/engine';
 import {
-  activeModules, getPublishedPointer, getPublishedSnapshot, getReadyDb, handleSiteAction, hostingFromEnv, loadPageModules, mailerFromEnv, moduleSitemapPaths,
+  activeModules, logEvent, newRequestId, getPublishedPointer, getPublishedSnapshot, getReadyDb, handleSiteAction, hostingFromEnv, loadPageModules, mailerFromEnv, moduleSitemapPaths,
   publishedSiteOwner, siteBase, siteSecret, type CookieSpec, type SectionOverride, type SiteCtx,
 } from '@saitify/platform';
 import { appUrl } from '../../../../lib/server/platform';
@@ -164,7 +164,7 @@ export async function GET(req: Request, { params }: Params) {
     if (notModified(etag)) return new Response(null, { status: 304, headers: { ...SECURITY, ...common, ETag: etag } });
     return reply(doc.html, 200, html, { ...common, ETag: etag });
   } catch (e) {
-    console.error('[saitify] public render failed:', e instanceof Error ? e.name : 'unknown'); // no stack, no data
+    logEvent('error', 'public_render_failed', { site: (await params).site, rid: newRequestId() }, e); // no stack, no data
     return reply(unavailableDocument(), 503, html, { 'Cache-Control': 'no-store', 'Retry-After': '30', 'X-Robots-Tag': 'noindex' });
   }
 }
@@ -221,7 +221,7 @@ export async function POST(req: Request, { params }: Params) {
     const { doc } = await renderPage(c, website, sctx, segments, query, { [result.sectionId]: { state: result.state, extra: result.extra } });
     return reply(doc.html, doc.status === 404 ? 404 : result.status, html, { ...PRIVATE, 'X-Robots-Tag': 'noindex' }, cookies);
   } catch (e) {
-    console.error('[saitify] site action failed:', e instanceof Error ? e.name : 'unknown');
+    logEvent('error', 'site_action_failed', { site: (await params).site, rid: newRequestId() }, e);
     return reply(unavailableDocument(), 503, html, { 'Cache-Control': 'no-store', 'Retry-After': '30', 'X-Robots-Tag': 'noindex' });
   }
 }
