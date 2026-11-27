@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PALETTE_IDS, STYLE_IDS } from '@saitify/engine';
-import { CATEGORIES, CAPABILITIES, TEMPLATES, createInitialState, generateProject, generateWithTemplate, normalizeState, reduce, type Action, type WizardState } from './index';
+import { CATEGORIES, CAPABILITIES, TEMPLATES, createInitialState, generateProject, generateWithTemplate, normalizeState, reduce, type Action, type CategoryId, type WizardState } from './index';
 
 /**
  * Fidelity matrix: whatever combination of answers a person gives, the generated website must be valid AND must reflect those
@@ -24,7 +24,7 @@ const text = (v: unknown) => JSON.stringify(v);
 function build(): { state: WizardState; label: string } {
   const cat = pick(CATEGORIES);
   const lang = pick(['en', 'ro'] as const);
-  let s = run(createInitialState(), { type: 'setCategory', category: cat.id });
+  let s = run(createInitialState(), { type: 'setCategory', category: cat.id as CategoryId });
   s = run(s, { type: 'patchIdea', patch: { text: pick(TEXTS), audience: pick(TEXTS).slice(0, 300) } });
   s = run(s, { type: 'patchInfo', patch: { name: pick(NAMES), description: pick(TEXTS).slice(0, 400), language: lang, phone: pick(PHONES), email: pick(EMAILS), address: pick(ADDRESSES), items: sample(['Torturi la comandă', 'Prăjituri „de casă”', 'Catering <evenimente>', 'Item & "four"', 'Ünïcødé'], 1 + Math.floor(rnd() * 4)).join('\n') } });
   for (const f of cat.fields) s = run(s, { type: 'setExtra', id: f.id, value: f.options ? pick(f.options) : pick(TEXTS).slice(0, 60) });
