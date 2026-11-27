@@ -372,7 +372,7 @@ export function ProductDemo({ data }: { data: DemoData }) {
 
   return (
     <div ref={root} className="mx-auto max-w-6xl" data-testid="product-demo" data-step={id} data-playing={running ? 'true' : 'false'}>
-      <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8">
         {/* The stage keeps one fixed size so nothing below it ever moves. */}
         <div className="lg:order-2">
           <div ref={stage} className="relative h-[25rem] sm:h-[28rem] lg:h-[31rem]" aria-hidden="true" data-testid="demo-stage">
