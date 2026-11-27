@@ -1,12 +1,27 @@
 import { createInitialState, getCategory, reduce, type Action, type CategoryId, type WizardState } from '@saitify/configurator';
 import type { Ctx } from './auth/service';
-import { createPgliteDb, runMigrations } from './db';
+import { createPgliteDb, createPostgresDb, runMigrations, type Db } from './db';
 import type { Mail, Mailer } from './mail';
 
 export type TestCtx = Ctx & { outbox: Mail[] };
 
+/**
+ * Tests run on the embedded database. Set TEST_POSTGRES_URL (a server where the user may create databases) to run the same tests
+ * against real PostgreSQL, each in its own throwaway database. The embedded database is not the production driver, so this is
+ * how driver differences (for example how JSON is passed) are caught.
+ */
+async function freshPostgres(url: string): Promise<Db> {
+  const admin = createPostgresDb(url);
+  const name = `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  await admin.exec(`create database ${name}`);
+  await admin.close();
+  const u = new URL(url);
+  u.pathname = `/${name}`;
+  return createPostgresDb(u.toString());
+}
+
 export async function makeCtx(opts: { mailer?: 'capture' | 'none' | 'failing' } = {}): Promise<TestCtx> {
-  const db = await createPgliteDb();
+  const db = process.env.TEST_POSTGRES_URL ? await freshPostgres(process.env.TEST_POSTGRES_URL) : await createPgliteDb();
   await runMigrations(db);
   const outbox: Mail[] = [];
   const configured = opts.mailer !== 'none';

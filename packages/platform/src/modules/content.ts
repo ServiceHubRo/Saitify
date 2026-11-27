@@ -1,5 +1,4 @@
 import { richText, type BlogData, type CourseOutline, type CoursesData, type DirectoryData, type EventCard, type EventsData, type FormState, type ImageRef, type PostCard, type RichBlock } from '@saitify/engine';
-import { isUniqueViolation } from '../auth/service';
 import type { Db } from '../db/types';
 import { ProjectError, isUuid } from '../projects/service';
 import { parseSettings } from './catalog';
@@ -149,12 +148,9 @@ export async function eventAction(ctx: SiteCtx, action: string, input: ActionInp
     const state = registrationState(e, used, ctx.now);
     if (state !== 'open') return { error: state === 'full' ? 'Sorry, this event is full.' : 'Registration for this event is closed.' };
     if (e.capacity !== null && used + qty > e.capacity) return { error: `Only ${e.capacity - used} ${e.capacity - used === 1 ? 'place is' : 'places are'} left.` };
-    try {
-      await t.query(`insert into event_registrations (project_id, event_id, name, email, quantity, reference, access_hash) values ($1, $2, $3, $4, $5, $6, $7)`, [ctx.project.id, e.id, v.name, v.email!.toLowerCase(), qty, reference, hashToken(key)]);
-    } catch (err) {
-      if (isUniqueViolation(err)) return { error: 'This email is already registered for this event.' };
-      throw err;
-    }
+    // ON CONFLICT instead of catching the unique violation: on real PostgreSQL a failed statement aborts the whole transaction, even when caught.
+    const inserted = await t.query(`insert into event_registrations (project_id, event_id, name, email, quantity, reference, access_hash) values ($1, $2, $3, $4, $5, $6, $7) on conflict (event_id, email) where status = 'registered' do nothing returning id`, [ctx.project.id, e.id, v.name, v.email!.toLowerCase(), qty, reference, hashToken(key)]);
+    if (inserted.length === 0) return { error: 'This email is already registered for this event.' };
     return { event: e };
   });
   if ('error' in result) return fail(sectionId, { message: result.error, values: v }, 409);

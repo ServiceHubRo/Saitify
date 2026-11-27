@@ -20,8 +20,24 @@ function wrap(sql: postgres.Sql | postgres.TransactionSql, close: () => Promise<
   return db;
 }
 
+/**
+ * Every query in this codebase passes JSON as text (`JSON.stringify(x)` with a `$n::jsonb` cast), which is also how the embedded
+ * database receives it. This driver, by default, would JSON-encode that text a second time and store a JSON *string* instead of the
+ * object, so reads came back as a string (projects "not in a format we can read"). Text passes through untouched; anything that is
+ * not text is still encoded. Reading is unchanged.
+ */
+const passThroughJson = {
+  to: 114,
+  from: [114, 3802],
+  serialize: (x: unknown) => (typeof x === 'string' ? x : JSON.stringify(x)),
+  parse: (x: string) => JSON.parse(x),
+};
+
 /** `max: 1` and no prepared statements keep this safe for serverless functions and PgBouncer/Supabase pooling. */
 export function createPostgresDb(url: string): Db {
-  const sql = postgres(url, { max: 1, prepare: false, idle_timeout: 20, connect_timeout: 10, onnotice: () => undefined });
+  const sql = postgres(url, {
+    max: 1, prepare: false, idle_timeout: 20, connect_timeout: 10, onnotice: () => undefined,
+    types: { json: passThroughJson, jsonb: { ...passThroughJson, to: 3802 } },
+  });
   return wrap(sql, () => sql.end({ timeout: 5 }));
 }
