@@ -97,7 +97,8 @@ export function reportToMonitoring(input: ReportInput, safeContext: LogContext, 
     const body = `${JSON.stringify({ event_id: event.event_id, sent_at: new Date().toISOString() })}\n${JSON.stringify({ type: 'event' })}\n${JSON.stringify(event)}`;
     void fetchImpl(`${cfg.endpoint}?sentry_version=7&sentry_key=${cfg.key}&sentry_client=saitlify%2F1`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-sentry-envelope' },
+      // No custom headers on purpose: a plain string body is sent as text/plain, which browsers allow cross-origin without a preflight
+      // request (this is how Sentry's own browser SDK sends envelopes).
       body,
       keepalive: true,
     }).catch(() => undefined);

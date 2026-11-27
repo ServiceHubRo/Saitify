@@ -36,7 +36,12 @@ describe('the deployment address comes from the environment only', () => {
       }
     };
     for (const d of ['apps/web/app', 'apps/web/components', 'apps/web/lib', 'apps/web/proxy.ts', 'packages/platform/src', 'packages/engine/src', 'packages/configurator/src', 'packages/editor/src']) {
-      try { statSync(join(root, d)).isDirectory() ? walk(join(root, d)) : /saitify\.ro/i.test(readFileSync(join(root, d), 'utf8')) && hits.push(d); } catch { /* optional path */ }
+      try {
+        if (statSync(join(root, d)).isDirectory()) walk(join(root, d));
+        else if (/saitify\.ro/i.test(readFileSync(join(root, d), 'utf8'))) hits.push(d);
+      } catch {
+        /* optional path */
+      }
     }
     expect(hits).toEqual([]);
   });

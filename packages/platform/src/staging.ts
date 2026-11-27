@@ -16,4 +16,4 @@ export const isStaging = (env: Env): boolean => ['1', 'true', 'yes', 'on'].inclu
 export const stagingLiveKeyConflict = (env: Env): boolean => isStaging(env) && /^(sk|rk)_live_/.test((env.STRIPE_SECRET_KEY ?? '').trim());
 
 export const STAGING_ROBOTS_VALUE = 'noindex, nofollow, noarchive, nosnippet';
-export const STAGING_BILLING_MESSAGE = 'This is a staging site, so billing is switched off: a live Stripe key is set here and staging only accepts test keys (sk_test_…). Replace the key in the site\'s environment variables and redeploy.';
+export const STAGING_BILLING_MESSAGE = 'A live Stripe key is set here, and a staging site only accepts test keys (sk_test_…). Replace STRIPE_SECRET_KEY in this site\'s environment variables with a test key and redeploy.';

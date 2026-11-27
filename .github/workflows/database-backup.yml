@@ -1,0 +1,36 @@
+# Manual database backup (nothing runs on a schedule). Start it from GitHub: Actions -> "Database backup" -> Run workflow.
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions): BACKUP_DATABASE_URL, BACKUP_PASSPHRASE.
+# The result is an ENCRYPTED file kept as a workflow artifact for 14 days. See docs/PHASE11-ACTIONS-NEEDED.md, section "Backups".
+name: Database backup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the PostgreSQL 17 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+      - name: Back up and encrypt
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          ops/backup-database.sh backup-out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: saitlify-database-backup
+          path: backup-out/*.gpg
+          retention-days: 14
+          if-no-files-found: error
