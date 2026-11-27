@@ -18,7 +18,7 @@ Rule: no unauthenticated person may create, configure, edit, save, manage or pub
 | `POST /api/contact` | open, unlimited | open (it is a contact form) but same-origin, size-capped and rate-limited | route |
 | `POST /api/stripe/webhook` | signed | unchanged | signature |
 
-"Create your website" appears in the header, the hero and the closing band; all go to `/create`, which asks the visitor to sign in first and then returns them. "Sign in to save" inside the configurator only appears if the session ended while working (then a draft kept in the browser is restored after signing in again; tested).
+"Create your website" appears in the header (global) and the hero; the closing band now says "Start free" so the page no longer has three identically worded buttons (found during the independent verification); all go to `/create`, which asks the visitor to sign in first and then returns them. "Sign in to save" inside the configurator only appears if the session ended while working (then a draft kept in the browser is restored after signing in again; tested).
 
 Not verified: behaviour with cookies disabled; a session that expires exactly mid-save (the editor shows its conflict/sign-in message; covered in earlier phases).
 

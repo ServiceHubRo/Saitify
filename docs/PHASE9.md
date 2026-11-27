@@ -71,7 +71,7 @@ A seven-step tour of the real workflow, looping: choose a template or start from
 - **Light:** no video, no images, no animation library. CSS keyframes plus a small client component (about 26 KB of source, before minification). Nothing plays until it is on screen; it pauses when the tab is hidden or the section is mostly off screen; there is always a visible Pause/Play, Previous/Next and a step list (desktop) or progress dots (mobile).
 - **Reduced motion:** with `prefers-reduced-motion` there is no autoplay, no cursor, no running animation; each step shows its finished state and the visitor moves with Previous/Next (tested).
 - **Mobile:** not a shrunken desktop. The stage keeps a fixed, shorter height, two-column scenes collapse, the step text sits under the stage, progress dots replace the list. Verified at 360, 390, 768, 1280 and 1440 px: no horizontal overflow, the stage height and width never change between steps (so nothing below it moves), CLS 0.000.
-- **Verified:** it advances by itself through all seven steps (observed in a 50 s run), Pause holds a step, Play resumes, every step is reachable, no duplicate section, and the primary action count on the page is two (hero and closing band). The visual stage is hidden from assistive technology; the step title and description carry the same information.
+- **Verified:** it advances by itself through all seven steps (observed in a 50 s run), Pause holds a step, Play resumes, every step is reachable, no duplicate section, and the page has one "Create your website" button in the hero plus a differently worded closing button ("Start free"), with the global one in the header. The visual stage is hidden from assistive technology; the step title and description carry the same information.
 - **Not verified:** real phones (only Chromium emulation), real-network load time, screen readers.
 
 ## 4. Module audit (additional requirement, section 8 of the phase)
@@ -83,7 +83,7 @@ Unchanged since the audit; see the table in `docs/PHASE9-AUDIT.md`: Forms, Blog,
 |---|---|
 | `pnpm lint` | clean |
 | `pnpm typecheck` (all packages) | clean |
-| `pnpm test` (unit and integration, real embedded Postgres) | **408 passed, 0 failed** (15 files) |
+| `pnpm test` (unit and integration, real embedded Postgres) | **412 passed, 0 failed** (16 files; includes the contact rate-limit test added in the independent verification) |
 | `pnpm build` | succeeds |
 | `pnpm e2e` (Playwright, 5 viewports: 1440, 1280, 768, 390, 360) | **826 passed, 0 failed, 14 skipped** (840 tests; the skipped ones are viewport-specific, e.g. the mobile menu on desktop). The first full run had 5 failures, all one real regression I introduced (see M2), fixed and re-run in full. |
 

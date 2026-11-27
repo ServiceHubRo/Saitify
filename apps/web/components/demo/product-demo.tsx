@@ -27,7 +27,7 @@ const BEATS = 5; // beats 0..4 per step
 const BEAT_MS = 1200;
 
 const STEPS = [
-  { id: 'choose', title: 'Start from a template or from scratch', text: 'Pick one of the starting designs, or just tell us what kind of website you are building.' },
+  { id: 'choose', title: 'Start from a template or from scratch', text: 'Use a template from the Templates page, or start without one and pick a starting design (or none) along the way.' },
   { id: 'configure', title: 'Answer a few questions', text: 'Your business name, what you offer and how people can reach you. This becomes your first draft.' },
   { id: 'generate', title: 'Your website is generated', text: 'Pages, sections and design are built from your answers and checked by the same engine that publishes your website.' },
   { id: 'edit', title: 'Edit it visually', text: 'Click any text to change it, switch colours and style, add or reorder sections. Changes are saved as you go.' },
@@ -75,9 +75,9 @@ type SceneProps = { beat: number; data: DemoData; device: 'desktop' | 'tablet' |
 function Choose({ beat, data }: SceneProps) {
   const picked = beat >= 3;
   return (
-    <Chrome title="Saitlify · New website">
+    <Chrome title="Saitlify · Create your website">
       <div className="flex h-full flex-col gap-3 p-3 sm:p-5">
-        <p className="text-sm font-semibold text-midnight">How do you want to start?</p>
+        <p className="text-sm font-semibold text-midnight">Pick a starting design</p>
         <ul className="grid min-h-0 flex-1 gap-2 sm:grid-cols-4 sm:gap-3">
           {data.templates.map((t) => {
             const on = picked && t.id === 'table-restaurant';
@@ -93,7 +93,7 @@ function Choose({ beat, data }: SceneProps) {
           })}
           <li className="flex items-center gap-3 rounded-xl border border-dashed border-midnight/25 p-2.5 sm:flex-col sm:items-start sm:gap-2 sm:p-3">
             <span className="grid h-9 w-12 shrink-0 place-items-center rounded-md bg-cloud text-lg text-midnight/50 sm:h-16 sm:w-full" aria-hidden="true">+</span>
-            <span className="text-[13px] font-semibold text-midnight">Start from scratch</span>
+            <span className="text-[13px] font-semibold text-midnight">No template</span>
           </li>
         </ul>
         <div className="flex justify-end">
@@ -105,7 +105,7 @@ function Choose({ beat, data }: SceneProps) {
 }
 
 function Configure({ beat, data }: SceneProps) {
-  const labels = ['Type', 'Idea', 'Details', 'Pages', 'Features', 'Look', 'Review'];
+  const labels = ['Type', 'Idea', 'Details', 'Pages', 'Features', 'Look', 'Template', 'Review'];
   return (
     <Chrome title="Saitlify · Create your website">
       <div className="flex h-full flex-col gap-3 p-3 sm:p-5">
@@ -247,7 +247,7 @@ function Publish({ beat, data }: SceneProps) {
         <div className="absolute inset-3 hidden overflow-hidden rounded-md opacity-60 sm:block"><SiteFrame node={data.restyled} design={1000} /></div>
         <div className="absolute inset-x-3 top-1/2 mx-auto max-w-sm -translate-y-1/2 rounded-2xl bg-white p-4 shadow-2xl shadow-midnight/20 sm:p-5">
           <p className="text-[14px] font-semibold text-midnight">Publish your website</p>
-          <p className="mt-2 text-[11.5px] font-medium text-midnight/70">Address</p>
+          <p className="mt-2 text-[11.5px] font-medium text-midnight/70">Website address</p>
           <div className="mt-1 flex items-center gap-1 rounded-lg border border-midnight/25 px-2.5 py-2 text-[12px] text-midnight">
             {beat >= 1 ? <span className="demo-type" style={{ ['--chars' as string]: name.length }}>{name}</span> : <span className="text-midnight/35">your-address</span>}
             <span className="min-w-0 truncate text-midnight/45">{data.address.replace('casa-brasov', '')}</span>
@@ -260,7 +260,7 @@ function Publish({ beat, data }: SceneProps) {
               </li>
             ))}
           </ul>
-          <span data-t="publish-btn" className={`mt-4 block rounded-full py-2 text-center text-[12.5px] font-semibold text-white transition ${done ? 'bg-emerald-600' : 'bg-gradient-to-r from-violet to-blue'}`}>{done ? 'Published ✓' : 'Publish'}</span>
+          <span data-t="publish-btn" className={`mt-4 block rounded-full py-2 text-center text-[12.5px] font-semibold text-white transition ${done ? 'bg-emerald-600' : 'bg-gradient-to-r from-violet to-blue'}`}>{done ? 'Version 1 is published' : 'Publish website'}</span>
         </div>
       </div>
     </Chrome>

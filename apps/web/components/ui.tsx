@@ -165,7 +165,7 @@ export function CtaBand({
             <p className="mt-4 text-lg text-lavender">{text}</p>
             <div className="mt-8">
               <ButtonLink href="/create" variant="light">
-                Create your website
+                Start free
               </ButtonLink>
             </div>
           </div>

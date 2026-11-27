@@ -70,10 +70,12 @@ test.describe('homepage product demo', () => {
     expect(animated, 'running animations inside the demo').toBe(0);
   });
 
-  test('the homepage has a single primary call to action in its hero and the demo section is not repeated', async ({ page }) => {
+  test('the homepage has one primary action in its hero, a differently worded closing action, and the demo is not repeated', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('product-demo')).toHaveCount(1);
-    await expect(page.locator('main').getByRole('link', { name: 'Create your website' })).toHaveCount(2); // hero and closing band
+    // One primary action in the hero, one differently worded closing action; the header holds the global one (outside <main>).
+    await expect(page.locator('main').getByRole('link', { name: 'Create your website' })).toHaveCount(1);
+    await expect(page.locator('main').getByRole('link', { name: 'Start free' })).toHaveCount(1);
     await expect(page.getByText(/coming soon|early access|concept illustration|not a working product/i)).toHaveCount(0);
   });
 });
