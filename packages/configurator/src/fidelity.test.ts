@@ -44,7 +44,7 @@ describe('generated websites reflect the answers (400 random combinations)', () 
     let valid = 0;
     for (let i = 0; i < 400; i++) {
       const { state, label } = build();
-      const templates = TEMPLATES.filter((t) => !state.category || t.categories.includes(state.category));
+      const templates = TEMPLATES.filter((t) => !state.category || (t.categories as string[]).includes(state.category));
       const tpl = rnd() < 0.5 && templates.length ? pick(templates) : null;
       const g = tpl ? generateWithTemplate(state, tpl.id) : generateProject(state);
       const where = `#${i} ${label} tpl=${tpl?.id ?? '-'}`;
