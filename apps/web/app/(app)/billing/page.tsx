@@ -1,4 +1,4 @@
-import { getBillingView, stripeConfigured, stripeMode } from '@saitify/platform';
+import { getBillingView, stagingLiveKeyConflict, stripeConfigured, stripeMode } from '@saitify/platform';
 import type { Metadata } from 'next';
 import { BillingPanel } from '../../../components/billing/billing-panel';
 import { getCtx } from '../../../lib/server/platform';
@@ -22,7 +22,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     <>
       <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">Billing</h1>
       <p className="mt-2 text-lg text-midnight/70">Your plan, usage and payments.</p>
-      <BillingPanel initial={{ billing, available: stripeConfigured(process.env), mode: stripeMode(process.env) }} intent={intent} checkout={checkout} />
+      <BillingPanel initial={{ billing, available: stripeConfigured(process.env), mode: stripeMode(process.env), stagingBlocked: stagingLiveKeyConflict(process.env) }} intent={intent} checkout={checkout} />
     </>
   );
 }

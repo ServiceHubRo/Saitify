@@ -16,3 +16,6 @@ export * from './publishing/service';
 export * from './modules';
 export * from './billing';
 export * from './log';
+export * from './site-url';
+export * from './staging';
+export { monitoringConfig, parseDsn, reportClientError, reportToMonitoring, scrub, safeFrames } from './monitoring';

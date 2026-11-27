@@ -1,4 +1,4 @@
-import { checkSubdomainFormat, hostingFromEnv, isPrivatePath, loginUrlFor, sessionCookieName, subdomainFromHost } from '@saitify/platform/hosting';
+import { appUrlFromEnv, checkSubdomainFormat, hostingFromEnv, isStaging, STAGING_ROBOTS_VALUE, isPrivatePath, loginUrlFor, sessionCookieName, subdomainFromHost } from '@saitify/platform/hosting';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
@@ -15,8 +15,18 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 const APP_CSP = "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'";
 
-export function proxy(req: NextRequest) {
-  const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://saitify.ro').replace(/\/$/, '');
+/** On a staging deployment every response (pages, API, published websites) tells search engines not to index it. */
+function marked(res: NextResponse): NextResponse {
+  if (isStaging(process.env)) res.headers.set('X-Robots-Tag', STAGING_ROBOTS_VALUE);
+  return res;
+}
+
+export function proxy(req: NextRequest): NextResponse {
+  return marked(route(req));
+}
+
+function route(req: NextRequest): NextResponse {
+  const appUrl = appUrlFromEnv(process.env).url;
   const hosting = hostingFromEnv(process.env, appUrl);
 
   // The proxy alone decides how a request reached the renderer; a client can never set this header.

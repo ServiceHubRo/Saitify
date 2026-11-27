@@ -5,7 +5,7 @@ import type { Mail, Mailer } from './mail';
 
 export type TestCtx = Ctx & { outbox: Mail[] };
 
-export async function makeCtx(opts: { mailer?: 'capture' | 'none' } = {}): Promise<TestCtx> {
+export async function makeCtx(opts: { mailer?: 'capture' | 'none' | 'failing' } = {}): Promise<TestCtx> {
   const db = await createPgliteDb();
   await runMigrations(db);
   const outbox: Mail[] = [];
@@ -14,6 +14,7 @@ export async function makeCtx(opts: { mailer?: 'capture' | 'none' } = {}): Promi
     configured,
     async send(m) {
       if (!configured) return { delivered: false, reason: 'not_configured' };
+      if (opts.mailer === 'failing') return { delivered: false, reason: 'provider_error' }; // like an invalid RESEND_API_KEY
       outbox.push(m);
       return { delivered: true };
     },

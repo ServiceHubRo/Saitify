@@ -1,4 +1,5 @@
 import { logEvent } from '../log';
+import { stagingLiveKeyConflict } from '../staging';
 import Stripe from 'stripe';
 
 /**
@@ -37,8 +38,9 @@ export class StripeFailure extends Error {
 }
 
 type Env = Record<string, string | undefined>;
-export const stripeConfigured = (env: Env = process.env): boolean => /^(sk|rk)_(test|live)_/.test(env.STRIPE_SECRET_KEY ?? '');
-export const webhookConfigured = (env: Env = process.env): boolean => /^whsec_/.test(env.STRIPE_WEBHOOK_SECRET ?? '');
+/** Billing is off on a staging deployment that was given a LIVE key (see staging.ts): the key is never used. */
+export const stripeConfigured = (env: Env = process.env): boolean => /^(sk|rk)_(test|live)_/.test(env.STRIPE_SECRET_KEY ?? '') && !stagingLiveKeyConflict(env);
+export const webhookConfigured = (env: Env = process.env): boolean => /^whsec_/.test(env.STRIPE_WEBHOOK_SECRET ?? '') && !stagingLiveKeyConflict(env);
 /** Test-mode keys never move real money. Surfaced to administrators so nobody ships test keys by accident. */
 export const stripeMode = (env: Env = process.env): 'test' | 'live' | null => (stripeConfigured(env) ? ((env.STRIPE_SECRET_KEY ?? '').includes('_live_') ? 'live' : 'test') : null);
 

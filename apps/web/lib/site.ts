@@ -1,4 +1,7 @@
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://saitify.ro';
+import { appUrlFromEnv } from '@saitify/platform/hosting';
+
+/** The deployment's public address, from the environment only (APP_URL, NEXT_PUBLIC_SITE_URL, Netlify's deploy URL). No domain is hardcoded. */
+export const SITE_URL = appUrlFromEnv(process.env).url;
 
 export const SITE = {
   name: 'Saitlify',
