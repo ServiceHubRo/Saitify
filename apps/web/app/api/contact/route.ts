@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       from,
       to: [to],
       reply_to: input.email.trim(),
-      subject: `[Saitify contact] ${input.subject.trim()}`,
+      subject: `[Saitlify contact] ${input.subject.trim()}`,
       text: `From: ${input.name.trim()} <${input.email.trim()}>\n\n${input.message.trim()}`,
     }),
   }).catch(() => null);

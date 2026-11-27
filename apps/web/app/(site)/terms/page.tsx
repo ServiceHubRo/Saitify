@@ -3,27 +3,27 @@ import { LegalPage, LegalSection, Todo } from '../../../components/legal';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Saitify terms of service (draft structure, pending legal review).',
+  description: 'Saitlify terms of service (draft structure, pending legal review).',
   alternates: { canonical: '/terms' },
-  openGraph: { url: '/terms', title: 'Terms of Service | Saitify' },
+  openGraph: { url: '/terms', title: 'Terms of Service | Saitlify' },
 };
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      intro="These terms will describe how Saitify may be used. The product is still in development."
+      intro="These terms will describe how Saitlify may be used. The product is still in development."
     >
       <LegalSection title="1. Who we are">
         <p>
-          Saitify is operated by <Todo>legal company name</Todo>, registered at{' '}
+          Saitlify is operated by <Todo>legal company name</Todo>, registered at{' '}
           <Todo>registered address</Todo>, company number <Todo>registration number</Todo>,{' '}
           <Todo>VAT number, if applicable</Todo>.
         </p>
       </LegalSection>
       <LegalSection title="2. The service">
         <p>
-          Saitify is intended to let you create and publish a website. The website creator is not
+          Saitlify is intended to let you create and publish a website. The website creator is not
           available yet. This website currently only presents the product and accepts contact
           messages.
         </p>
@@ -38,7 +38,7 @@ export default function TermsPage() {
       </LegalSection>
       <LegalSection title="4. Your content">
         <p>
-          <Todo>Ownership of content you upload, licence granted to Saitify, and your responsibilities</Todo>
+          <Todo>Ownership of content you upload, licence granted to Saitlify, and your responsibilities</Todo>
         </p>
       </LegalSection>
       <LegalSection title="5. Acceptable use">

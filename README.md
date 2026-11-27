@@ -1,4 +1,4 @@
-# Saitify
+# Saitlify
 
 SaaS platform for non-technical users to create and publish websites.
 

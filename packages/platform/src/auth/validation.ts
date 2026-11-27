@@ -22,7 +22,7 @@ export function validateName(value: string): string | null {
 }
 
 const COMMON = new Set(
-  ['password', 'password1', 'password12', 'password123', 'passw0rd123', '1234567890', '12345678910', '123456789012', 'qwertyuiop', 'qwerty12345', 'qwerty123456', 'iloveyou123', 'letmein1234', 'welcome1234', 'admin12345', 'administrator', 'abcdefghij', 'abc1234567', '0123456789', '1q2w3e4r5t', 'saitify123', 'saitify1234', 'parola12345', 'parola123456'].map((s) => s.toLowerCase()),
+  ['password', 'password1', 'password12', 'password123', 'passw0rd123', '1234567890', '12345678910', '123456789012', 'qwertyuiop', 'qwerty12345', 'qwerty123456', 'iloveyou123', 'letmein1234', 'welcome1234', 'admin12345', 'administrator', 'abcdefghij', 'abc1234567', '0123456789', '1q2w3e4r5t', 'saitify123', 'saitify1234', 'saitlify123', 'saitlify1234', 'parola12345', 'parola123456'].map((s) => s.toLowerCase()),
 );
 
 export type PasswordRule = { id: 'length' | 'common' | 'personal'; label: string; ok: boolean };

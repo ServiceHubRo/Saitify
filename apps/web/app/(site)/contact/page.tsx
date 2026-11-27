@@ -6,9 +6,9 @@ import { subjectForTopic } from '../../../lib/contact';
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: 'Get in touch with Saitify or request early access.',
+  description: 'Get in touch with Saitlify or request early access.',
   alternates: { canonical: '/contact' },
-  openGraph: { url: '/contact', title: 'Contact | Saitify' },
+  openGraph: { url: '/contact', title: 'Contact | Saitlify' },
 };
 
 export default async function ContactPage({
@@ -32,7 +32,7 @@ export default async function ContactPage({
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-midnight/70">
               {earlyAccess
-                ? 'The Saitify website creator is in development. Leave your details and we will let you know when you can create your website.'
+                ? 'The Saitlify website creator is in development. Leave your details and we will let you know when you can create your website.'
                 : pricing
                   ? 'Pricing has not been announced yet. Leave your details and we will contact you when it is ready.'
                   : 'Questions, feedback or ideas? Send us a message and we will reply by email.'}

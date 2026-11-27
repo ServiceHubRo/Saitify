@@ -1,3 +1,5 @@
+import { getEntitlements } from '../billing/entitlements';
+import { listPlans } from '../billing/plans';
 import type { Db } from '../db/types';
 import { getModule, MODULE_IDS, MODULE_LIMIT_KEYS, type ModuleId, type ModuleLimitKey } from './catalog';
 
@@ -6,11 +8,10 @@ import { getModule, MODULE_IDS, MODULE_LIMIT_KEYS, type ModuleId, type ModuleLim
  * answered on the server from stored data. Every enforcement point (activation, creating items, visitor bookings, form
  * submissions …) asks `getModuleEntitlements`; nothing else hard-codes plan rules.
  *
- * Source of truth:
- *  - Today (Phase 7 billing not merged on this branch): `platformEntitlements`. All modules are included and generous,
- *    configurable safety caps apply, the same kind of caps Phase 4 uses for projects. This is NOT a plan and is not shown as one.
- *  - With Phase 7: register a resolver once at start-up that reads the account's plan and passes its `limits` JSON to
- *    `entitlementsFromPlanLimits` (see docs/PHASE8.md). Nothing else changes.
+ * Source of truth: the account's billing plan (Phase 7). The plan's `limits` JSON may carry `modules` (the module ids included;
+ * absent = all) and any module limit key (a number, or null for unlimited; absent = the platform fair-use cap below). Plans are
+ * edited by administrators at /admin/plans. When a payment lapses, billing already resolves to the Free plan's limits and nothing
+ * is deleted. `platformEntitlements` (all modules, fair-use caps) remains the fallback for tests and for plan-less setups.
  */
 
 export type ModuleAccess = { included: boolean; reason?: string };
@@ -71,17 +72,24 @@ export function entitlementsFromPlanLimits(planName: string, limits: Record<stri
   return { source: 'plan', planName, modules, limits: caps, upgradeAvailable: !opts.isTopPlan };
 }
 
+/** The account's real plan, mapped to module access. `upgradeAvailable` is true only when a better, purchasable plan exists. */
+export async function planEntitlements(db: Db, userId: string): Promise<ModuleEntitlements> {
+  const e = await getEntitlements(db, userId);
+  const better = (await listPlans(db, { publicOnly: true })).some((p) => p.priority > e.plan.priority);
+  return entitlementsFromPlanLimits(e.plan.name, e.plan.limits, { isTopPlan: !better });
+}
+
 export type EntitlementResolver = (db: Db, userId: string) => Promise<ModuleEntitlements>;
 const g = globalThis as typeof globalThis & { __saitifyModuleResolver?: EntitlementResolver };
 
-/** Installs the resolver that decides module entitlements (Phase 7 integration point). */
+/** Replaces the plan-based resolver (tests, or a different billing source). Pass null to restore the default. */
 export function setModuleEntitlementResolver(resolver: EntitlementResolver | null) {
   g.__saitifyModuleResolver = resolver ?? undefined;
 }
 
 export async function getModuleEntitlements(db: Db, userId: string): Promise<ModuleEntitlements> {
   const r = g.__saitifyModuleResolver;
-  return r ? r(db, userId) : platformEntitlements();
+  return r ? r(db, userId) : planEntitlements(db, userId);
 }
 
 /* ------------------------------------------------------------------ usage */

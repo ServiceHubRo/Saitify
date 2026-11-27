@@ -35,7 +35,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-12 border-t border-white/10 pt-6 text-sm text-white/60">
-          © {new Date().getFullYear()} Saitify. All rights reserved.
+          © {new Date().getFullYear()} Saitlify. All rights reserved.
         </p>
       </Container>
     </footer>

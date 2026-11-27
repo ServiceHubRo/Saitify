@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   activeModules, checkFormToken, checkModuleSections, createItem, dependencyOrder, deleteItem, disableModule, duplicateItem, enableModule, entitlementsFromPlanLimits,
   exportSubmissionsCsv, formToken, getModulesOverview, getOrder, handleSiteAction, listBookings, listItems, listSubmissions, loadPageModules, MODULES, parseSettings,
-  platformEntitlements, priceCart, priceOf, setModuleEntitlementResolver, siteSecret, slotsForDay, updateBooking, updateItem, updateModuleSettings, updateOrder,
+  platformEntitlements, priceCart, updatePlan, getModuleEntitlements, priceOf, setModuleEntitlementResolver, siteSecret, slotsForDay, updateBooking, updateItem, updateModuleSettings, updateOrder,
   validateItem, zonedToUtc, utcToZoned, registrationState, checkAnswer, type ActionResult, type SiteCtx, type ModuleId,
 } from './index';
 import { createProject, getProject } from './projects/service';
@@ -471,5 +471,64 @@ describe('configurator integration', () => {
     } finally {
       setModuleEntitlementResolver(null);
     }
+  });
+});
+
+describe('module entitlements follow the real billing plan (Phase 7)', () => {
+  it('uses the plan limits: modules included, caps, upgrade hints, lapse back to Free, nothing deleted', async () => {
+    const s = await setup('blog');
+    // A paid plan that includes only Forms and Blog, and allows 2 posts. Absent keys keep the defaults.
+    await updatePlan(ctx.db, s.owner, 'starter_test', { name: 'Starter', priority: 20, active: true, public: true, limits: { projects: 5, published_sites: 1, modules: ['forms', 'blog'], blog_posts: 2 } }, { create: true });
+    await updatePlan(ctx.db, s.owner, 'pro_test', { name: 'Pro', priority: 30, active: true, public: true, limits: { projects: 50, published_sites: 10, store_products: null } }, { create: true });
+    const free = await getModuleEntitlements(ctx.db, s.owner);
+    expect(free.source).toBe('plan');
+    expect(free.planName).toBe('Free');
+    expect(Object.values(free.modules).every((m) => m.included)).toBe(true); // no module list = everything, nothing invented
+    expect(free.upgradeAvailable).toBe(true);
+
+    await ctx.db.query(`insert into subscriptions (user_id, plan_id, status, billing_interval, current_period_end) values ($1, 'starter_test', 'active', 'month', now() + interval '20 days')`, [s.owner]);
+    const starter = await getModuleEntitlements(ctx.db, s.owner);
+    expect(starter.planName).toBe('Starter');
+    expect(starter.modules.store).toMatchObject({ included: false, reason: expect.stringContaining('Starter') });
+    expect(starter.modules.forms.included).toBe(true);
+    expect(starter.limits.blog_posts).toBe(2);
+    expect(starter.limits.store_products).toBe(platformEntitlements({}).limits.store_products);
+    expect(starter.upgradeAvailable).toBe(true);
+    await rejects(enableModule(ctx.db, s.owner, s.projectId, 'store'), 'limit');
+
+    await createItem(ctx.db, s.owner, s.projectId, 'post', { title: 'One' });
+    await createItem(ctx.db, s.owner, s.projectId, 'post', { title: 'Two' });
+    await expect(createItem(ctx.db, s.owner, s.projectId, 'post', { title: 'Three' })).rejects.toMatchObject({ code: 'limit', details: { upgrade: true, billing: true, max: 2, used: 2 } });
+
+    // Pro: no list (all modules), unlimited products.
+    await ctx.db.query(`update subscriptions set plan_id = 'pro_test' where user_id = $1`, [s.owner]);
+    const pro = await getModuleEntitlements(ctx.db, s.owner);
+    expect(pro.limits.store_products).toBeNull();
+    expect(pro.upgradeAvailable).toBe(false);
+    expect((await enableModule(ctx.db, s.owner, s.projectId, 'store')).enabled).toEqual(['store']);
+    await createItem(ctx.db, s.owner, s.projectId, 'product', { title: 'Allowed on Pro', price: 100 });
+
+    // Payment lapses (past the grace period): Free applies. Existing content stays and can be edited; adding to a module the plan
+    // does not include is refused. Here Free has no module list, so everything is still included but caps are the platform ones.
+    await ctx.db.query(`update subscriptions set status = 'past_due', past_due_since = now() - interval '30 days' where user_id = $1`, [s.owner]);
+    expect((await getModuleEntitlements(ctx.db, s.owner)).planName).toBe('Free');
+    expect((await listItems(ctx.db, s.owner, s.projectId, 'post')).total).toBe(2);
+    expect((await listItems(ctx.db, s.owner, s.projectId, 'product')).total).toBe(1);
+
+    // A plan that excludes a module the website already uses: it keeps working, shows "not in your plan", and cannot get new content.
+    await ctx.db.query(`update subscriptions set plan_id = 'starter_test', status = 'active', past_due_since = null where user_id = $1`, [s.owner]);
+    const o = await getModulesOverview(ctx.db, s.owner, s.projectId);
+    expect(o.modules.find((m) => m.id === 'store')).toMatchObject({ enabled: true, status: 'requires_upgrade', included: false });
+    await rejects(createItem(ctx.db, s.owner, s.projectId, 'product', { title: 'Blocked', price: 100 }), 'limit');
+    const kept = (await listItems(ctx.db, s.owner, s.projectId, 'product')).items[0]!;
+    await updateItem(ctx.db, s.owner, s.projectId, 'product', kept.id, { title: 'Allowed on Pro (edited)', price: 100 });
+    await deleteItem(ctx.db, s.owner, s.projectId, 'product', kept.id);
+  });
+  it('validates module keys in plans edited by an administrator', async () => {
+    const s = await setup();
+    await rejects(updatePlan(ctx.db, s.owner, 'bad_plan', { name: 'Bad', limits: { modules: ['store', 'rockets'] } }, { create: true }), 'invalid');
+    await rejects(updatePlan(ctx.db, s.owner, 'bad_plan', { name: 'Bad', limits: { blog_posts: -3 } }, { create: true }), 'invalid');
+    const ok = await updatePlan(ctx.db, s.owner, 'good_plan', { name: 'Good', limits: { modules: ['forms', 'forms'], events_events: null, blog_posts: 7 } }, { create: true });
+    expect(ok.limits).toMatchObject({ modules: ['forms'], events_events: null, blog_posts: 7 });
   });
 });

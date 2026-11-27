@@ -35,7 +35,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">{counts.total === 0 ? `Welcome to Saitify, ${first}` : `Welcome back, ${first}`}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">{counts.total === 0 ? `Welcome to Saitlify, ${first}` : `Welcome back, ${first}`}</h1>
           <p className="mt-2 text-lg text-midnight/70">{counts.total === 0 ? 'Your account is ready. Let’s build your first website.' : 'Pick up where you left off, or start something new.'}</p>
         </div>
         {counts.total > 0 ? <LinkButton href="/create" className="min-h-12">Create a new website</LinkButton> : null}

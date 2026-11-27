@@ -13,3 +13,4 @@ export * from './publishing/status';
 export * from './publishing/validate';
 export * from './publishing/service';
 export * from './modules';
+export * from './billing';

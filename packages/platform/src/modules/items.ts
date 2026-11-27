@@ -179,9 +179,18 @@ const COLS: CoreColumn[] = ['title', 'slug', 'status', 'position', 'featured', '
 
 export async function createItem(db: Db, ownerId: string, projectId: string, kindRaw: unknown, input: unknown): Promise<Item> {
   const { def, project, core, data } = await prepare(db, ownerId, projectId, kindRaw, input, null);
+  // Plan rules, decided on the server: the module must be in the plan, and the plan's cap must have room. Editing and deleting stay
+  // possible either way, so a downgrade never locks anyone out of their own data.
+  const ent = await getModuleEntitlements(db, ownerId);
+  const billing = { upgrade: ent.upgradeAvailable, billing: ent.source === 'plan' };
+  const access = ent.modules[def.module];
+  if (!access.included) throw new ProjectError('limit', `${access.reason ?? 'This module is not included in your plan.'} Existing content is kept; you can edit it but not add more.`, { module: def.module, ...billing });
   if (def.limit) {
-    const l = await checkModuleLimit(db, ownerId, project.id, def.limit, 1, await getModuleEntitlements(db, ownerId));
-    if (!l.allowed) throw new ProjectError('limit', `This website can have up to ${l.limit} ${LIMIT_LABELS[def.limit][1]}, and it has ${l.used}. Delete or archive some first.`, { limit: def.limit, used: l.used, max: l.limit });
+    const l = await checkModuleLimit(db, ownerId, project.id, def.limit, 1, ent);
+    if (!l.allowed) {
+      const plan = ent.planName ? `Your ${ent.planName} plan allows` : 'This website can have';
+      throw new ProjectError('limit', `${plan} up to ${l.limit} ${LIMIT_LABELS[def.limit][1]}, and you have ${l.used}. ${ent.upgradeAvailable ? 'Delete some or choose a higher plan.' : 'Delete some to add more.'}`, { limit: def.limit, used: l.used, max: l.limit, ...billing });
+    }
   }
   const values = COLS.map((c) => core[c] ?? null);
   try {
