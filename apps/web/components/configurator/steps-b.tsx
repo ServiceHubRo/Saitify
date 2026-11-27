@@ -2,6 +2,7 @@
 
 import {
   CAPABILITIES,
+  suggestedModules,
   PAGE_DEFS,
   canAddPage,
   getCategory,
@@ -11,6 +12,7 @@ import {
   type WizardState,
 } from '@saitify/configurator';
 import { useState, type Dispatch } from 'react';
+import { MODULES } from '@saitify/platform/client';
 import { StepIntro, Pill, inputClass } from './fields';
 
 type P = { state: WizardState; dispatch: Dispatch<Action>; errors: Errors; show: boolean; headingRef: React.Ref<HTMLHeadingElement> };
@@ -123,6 +125,8 @@ export function FeaturesStep(p: P) {
         ))}
       </ul>
 
+      <ModuleChoices state={state} dispatch={dispatch} />
+
       <section aria-labelledby="future" className="mt-12 rounded-3xl bg-cloud p-5 sm:p-7">
         <h2 id="future" className="text-xl font-semibold text-midnight">Coming later</h2>
         <p className="mt-2 max-w-2xl text-sm text-midnight/75">
@@ -144,5 +148,43 @@ export function FeaturesStep(p: P) {
         </details>
       </section>
     </>
+  );
+}
+
+/**
+ * Modules add real functionality (a store, bookings …). They are suggestions, never pre-ticked: a simple website stays simple.
+ * Chosen modules are switched on when the project is saved and their pages are added to the website.
+ */
+function ModuleChoices({ state, dispatch }: { state: WizardState; dispatch: Dispatch<Action> }) {
+  const suggested = new Set(suggestedModules(state));
+  const ordered = [...MODULES].sort((a, b) => Number(suggested.has(b.id)) - Number(suggested.has(a.id)));
+  return (
+    <section aria-labelledby="modules-step" className="mt-12">
+      <h2 id="modules-step" className="text-xl font-semibold text-midnight">Add functionality <span className="font-normal text-midnight/60">(optional)</span></h2>
+      <p className="mt-2 max-w-2xl text-sm text-midnight/75">Modules turn your website into a store, a booking page, a blog and more. Choose only what you need; you can switch modules on or off later.</p>
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2" aria-label="Modules">
+        {ordered.map((m) => {
+          const checked = state.modules.includes(m.id);
+          const needed = state.modules.some((x) => MODULES.find((y) => y.id === x)?.dependencies.includes(m.id));
+          const inputId = `mod-${m.id}`;
+          return (
+            <li key={m.id}>
+              <label htmlFor={inputId} className={`flex h-full cursor-pointer gap-3 rounded-2xl border p-4 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-violet ${checked ? 'border-violet bg-violet/5' : 'border-midnight/15 bg-white'}`}>
+                <input id={inputId} type="checkbox" checked={checked} disabled={checked && needed} onChange={() => dispatch({ type: 'toggleModule', id: m.id })} aria-describedby={`${inputId}-d`} className="mt-1 size-5 shrink-0 accent-violet" />
+                <span className="grid gap-1">
+                  <span className="flex flex-wrap items-center gap-2 font-semibold text-midnight">
+                    {m.name}
+                    {suggested.has(m.id) ? <Pill tone="good">Suggested</Pill> : null}
+                  </span>
+                  <span id={`${inputId}-d`} className="text-sm text-midnight/70">{m.description}</span>
+                  {m.dependencies.length ? <span className="text-sm text-midnight/60">Also adds {m.dependencies.map((d) => MODULES.find((x) => x.id === d)?.name).join(', ')}.</span> : null}
+                  {checked && needed ? <span className="text-sm text-midnight/60">Needed by another module you chose.</span> : null}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

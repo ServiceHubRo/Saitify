@@ -454,3 +454,22 @@ describe('events, directory and publishing', () => {
     expect((await getProject(ctx.db, s.owner, s.projectId))!.id).toBe(s.projectId);
   });
 });
+
+describe('configurator integration', () => {
+  it('uses the same module ids as the configurator and switches chosen modules on, idempotently', async () => {
+    const { MODULE_KEYS } = await import('@saitify/configurator');
+    const { MODULE_IDS, enableChosenModules } = await import('./index');
+    expect([...MODULE_KEYS].sort()).toEqual([...MODULE_IDS].sort());
+    const s = await setup();
+    expect(await enableChosenModules(ctx.db, s.owner, s.projectId, ['courses', 'forms', 'bogus'])).toEqual({ enabled: ['members', 'courses', 'forms'], failed: [] });
+    expect(await enableChosenModules(ctx.db, s.owner, s.projectId, ['courses', 'forms'])).toEqual({ enabled: [], failed: [] });
+    setModuleEntitlementResolver(async () => entitlementsFromPlanLimits('Free', { modules: ['forms'] }));
+    try {
+      const r = await enableChosenModules(ctx.db, s.owner, s.projectId, ['store', 'blog']);
+      expect(r.enabled).toEqual([]);
+      expect(r.failed.map((f) => f.id)).toEqual(['store', 'blog']);
+    } finally {
+      setModuleEntitlementResolver(null);
+    }
+  });
+});

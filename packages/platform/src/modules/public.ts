@@ -82,3 +82,31 @@ export async function handleSiteAction(ctx: SiteCtx, moduleRaw: string, action: 
     default: return fail(input.sectionId, { message: `${getModule(module)?.name ?? 'This module'} has no visitor actions.` }, 409);
   }
 }
+
+/** The project and owner behind a live website (for loading its modules). Only for websites that are online. */
+export async function publishedSiteOwner(db: import('../db/types').Db, subdomain: string): Promise<{ projectId: string; ownerId: string } | null> {
+  if (!/^[a-z0-9-]{3,40}$/.test(subdomain)) return null;
+  const r = (await db.query<{ project_id: string; owner_id: string }>(`select project_id, owner_id from sites where subdomain = $1 and state = 'published'`, [subdomain]))[0];
+  return r ? { projectId: r.project_id, ownerId: r.owner_id } : null;
+}
+
+const SITEMAP_KINDS: Record<string, { kind: string; status: string; extra?: string }> = {
+  blog: { kind: 'post', status: 'published', extra: `and at <= now() and coalesce((data->>'membersOnly')::boolean, false) = false` },
+  store: { kind: 'product', status: 'active' },
+  events: { kind: 'event', status: 'published' },
+  directory: { kind: 'listing', status: 'published' },
+  courses: { kind: 'course', status: 'published' },
+};
+
+/** Public item addresses (posts, products …) for the sitemap. Drafts, members-only posts and switched-off modules are left out. */
+export async function moduleSitemapPaths(db: import('../db/types').Db, projectId: string, website: import('@saitify/engine').Website, active: ReadonlySet<string>): Promise<string[]> {
+  const out: string[] = [];
+  for (const page of website.pages.filter((p) => p.visible && !p.access)) {
+    const s = page.sections.find((x) => x.visible && defaultRegistry.get(x.type)?.detail);
+    const k = s ? SITEMAP_KINDS[s.type] : undefined;
+    if (!s || !k || !active.has(moduleOfBlock(s.type) ?? '')) continue;
+    const rows = await db.query<{ slug: string }>(`select slug from module_items where project_id = $1 and kind = $2 and status = $3 ${k.extra ?? ''} and slug is not null order by updated_at desc limit 2000`, [projectId, k.kind, k.status]);
+    for (const r of rows) out.push(`/${page.slug}/${r.slug}`);
+  }
+  return out;
+}

@@ -63,6 +63,7 @@ export function Canvas({
   onNavigate,
   onInlineEdit,
   empty,
+  moduleData,
 }: {
   site: Website;
   pageId: string;
@@ -75,6 +76,8 @@ export function Canvas({
   onNavigate: (pageId: string) => void;
   onInlineEdit: (sectionId: string, path: readonly (string | number)[], text: string) => EditResult;
   empty: React.ReactNode;
+  /** Live data for module sections (products, posts …), loaded for the page on the canvas. */
+  moduleData?: Record<string, unknown>;
 }) {
   const width = DEVICES.find((d) => d.id === device)!.width;
   const { ref: fitRef, scale } = useFit(width);
@@ -241,7 +244,7 @@ export function Canvas({
             style={{ width, zoom: scale }}
             className={`overflow-hidden bg-white shadow-xl ring-1 ring-midnight/10 ${device === 'desktop' ? 'rounded-lg' : 'rounded-[28px]'} ${preview ? '' : 'sf-editing'}`}
           >
-            <SiteRenderer website={site} pageSlug={site.pages.find((p) => p.id === pageId)?.slug} mode="preview" resolveHref={(p) => `${EDITOR_HREF}${p.id}`} />
+            <SiteRenderer website={site} pageSlug={site.pages.find((p) => p.id === pageId)?.slug} mode="preview" resolveHref={(p) => `${EDITOR_HREF}${p.id}`} moduleData={moduleData} />
           </div>
           {!preview ? (
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10">

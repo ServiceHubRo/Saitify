@@ -334,3 +334,23 @@ describe('site info and fields', () => {
     expect(E.locateText(hero.content, 'not in this section')).toBeNull();
   });
 });
+
+describe('module blocks in the editor (Phase 8)', () => {
+  it('offers a record picker for references such as the form of a Form section', async () => {
+    const { defaultRegistry } = await import('@saitify/engine');
+    const { fieldsForBlock } = await import('./fields');
+    const fields = fieldsForBlock(defaultRegistry.get('form')!);
+    expect(fields.find((f) => f.key === 'form')).toMatchObject({ kind: 'ref', ref: 'form', required: true });
+  });
+  it('restricts and reopens pages, but never the home page', async () => {
+    const { setPageAccess } = await import('./ops');
+    const { validateWebsite, DEMOS } = await import('@saitify/engine');
+    const site = validateWebsite(DEMOS[0]!.config).website!;
+    const other = site.pages.find((p) => p.type !== 'home')!;
+    const locked = setPageAccess(site, other.id, { members: true, plans: ['gold', 'gold'] });
+    expect(locked.pages.find((p) => p.id === other.id)!.access).toEqual({ members: true, plans: ['gold'] });
+    expect(validateWebsite(locked).issues.filter((i) => i.severity === 'error')).toEqual([]);
+    expect(setPageAccess(locked, other.id, null).pages.find((p) => p.id === other.id)!.access).toBeUndefined();
+    expect(() => setPageAccess(site, site.pages.find((p) => p.type === 'home')!.id, { members: true, plans: [] })).toThrow(/home page/);
+  });
+});

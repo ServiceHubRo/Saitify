@@ -1,7 +1,9 @@
 import { getCategory } from './catalog/categories';
-import type { CapabilityId, CategoryId, PageKey } from './catalog/types';
+import { getCapability } from './catalog/capabilities';
+import type { CapabilityId, CategoryId, ModuleKey, PageKey } from './catalog/types';
 
-export type Hints = { pages: PageKey[]; capabilities: CapabilityId[]; interests: CapabilityId[] };
+/** `modules` are suggestions shown next to the module choices; they are never selected automatically. */
+export type Hints = { pages: PageKey[]; capabilities: CapabilityId[]; interests: CapabilityId[]; modules: ModuleKey[] };
 
 type Rule = { test: RegExp; pages?: PageKey[]; capabilities?: CapabilityId[]; interests?: CapabilityId[] };
 
@@ -27,13 +29,18 @@ const RULES: Rule[] = [
 
 export function inferHints(category: CategoryId | null, text: string): Hints {
   const available = new Set<PageKey>(getCategory(category)?.pages.available ?? []);
-  const out: Hints = { pages: [], capabilities: [], interests: [] };
+  const out: Hints = { pages: [], capabilities: [], interests: [], modules: [] };
   if (!text.trim()) return out;
   for (const rule of RULES) {
     if (!rule.test.test(text)) continue;
     for (const p of rule.pages ?? []) if (available.has(p) && !out.pages.includes(p)) out.pages.push(p);
     for (const c of rule.capabilities ?? []) if (!out.capabilities.includes(c)) out.capabilities.push(c);
-    for (const i of rule.interests ?? []) if (!out.interests.includes(i)) out.interests.push(i);
+    for (const i of rule.interests ?? []) {
+      const module = getCapability(i)?.module;
+      if (module) {
+        if (!out.modules.includes(module)) out.modules.push(module);
+      } else if (!out.interests.includes(i)) out.interests.push(i);
+    }
   }
   return out;
 }

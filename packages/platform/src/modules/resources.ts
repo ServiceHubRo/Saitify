@@ -415,3 +415,39 @@ export function slugify(input: string): string {
       .replace(/-+$/g, '') || 'item'
   );
 }
+
+/** Settings forms per module, rendered by the same form component as items and validated by SETTINGS_SCHEMAS on the server. */
+export const SETTINGS_FIELDS: Record<ModuleId, FieldSpec[]> = {
+  forms: [{ key: 'notifyEmail', label: 'Email new answers to', type: 'email', help: 'Leave empty to only keep answers in the inbox. Needs the email service.' }],
+  blog: [{ key: 'showAuthor', label: 'Show author names', type: 'boolean' }],
+  store: [
+    { key: 'currency', label: 'Currency', type: 'select', required: true, options: ['RON', 'EUR', 'USD', 'GBP', 'CHF', 'HUF', 'PLN', 'BGN', 'CZK', 'SEK', 'DKK', 'NOK'].map((c) => ({ value: c, label: c })) },
+    { key: 'payCashOnDelivery', label: 'Cash on delivery', type: 'boolean' },
+    { key: 'payBankTransfer', label: 'Bank transfer', type: 'boolean' },
+    { key: 'bankDetails', label: 'Bank details shown to customers', type: 'textarea', max: 600, showIf: { key: 'payBankTransfer', equals: true }, help: 'Account holder, IBAN and bank.' },
+    { key: 'payAtPickup', label: 'Payment at pickup', type: 'boolean' },
+    { key: 'requireDelivery', label: 'Ask for a delivery address', type: 'boolean' },
+    { key: 'shippingCents', label: 'Delivery price', type: 'money', showIf: { key: 'requireDelivery', equals: true } },
+    { key: 'freeShippingFromCents', label: 'Free delivery from', type: 'money', help: 'Optional order total from which delivery is free.', showIf: { key: 'requireDelivery', equals: true } },
+    { key: 'notifyEmail', label: 'Email new orders to', type: 'email', help: 'Empty sends them to your account email (when email is configured).', advanced: true },
+  ],
+  booking: [
+    { key: 'timezone', label: 'Time zone', type: 'timezone', required: true },
+    { key: 'hours', label: 'Working hours', type: 'hours', help: 'Add two ranges on a day for a break, for example 09:00–12:00 and 13:00–17:00.' },
+    { key: 'confirmation', label: 'New bookings', type: 'select', required: true, options: [{ value: 'auto', label: 'Confirmed right away' }, { value: 'manual', label: 'Wait for my confirmation' }] },
+    { key: 'intervalMin', label: 'Start times every (minutes)', type: 'number', min: 5, max: 240, required: true },
+    { key: 'minNoticeHours', label: 'Minimum notice (hours)', type: 'number', min: 0, max: 720, required: true },
+    { key: 'maxAdvanceDays', label: 'Bookable up to (days ahead)', type: 'number', min: 1, max: 365, required: true },
+    { key: 'bufferMin', label: 'Break between appointments (minutes)', type: 'number', min: 0, max: 240, required: true, advanced: true },
+    { key: 'closedDates', label: 'Closed on (dates)', type: 'tags', max: 200, help: 'Dates as YYYY-MM-DD, for example 2026-12-25.', advanced: true },
+    { key: 'policy', label: 'Cancellation rules shown to customers', type: 'textarea', max: 600, advanced: true },
+    { key: 'notifyEmail', label: 'Email new bookings to', type: 'email', advanced: true },
+  ],
+  events: [{ key: 'notifyEmail', label: 'Email new registrations to', type: 'email' }],
+  directory: [{ key: 'fields', label: 'Your own listing fields', type: 'list', max: 10, itemFields: [{ key: 'key', label: 'Code', type: 'slug', required: true, help: 'Lowercase, for example opening_hours.' }, { key: 'label', label: 'Label', type: 'text', required: true, max: 60 }] }],
+  members: [
+    { key: 'allowSignup', label: 'Visitors can create accounts', type: 'boolean' },
+    { key: 'welcome', label: 'Welcome text for signed-in members', type: 'textarea', max: 2000 },
+  ],
+  courses: [],
+};

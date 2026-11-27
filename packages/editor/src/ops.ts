@@ -344,6 +344,18 @@ export function setPageSeo(site: Website, id: string, seo: { title?: string; des
   });
 }
 
+/** Who may see a page (Memberships module): everyone, or signed-in members (optionally only some plans). Enforced by the server. */
+export function setPageAccess(site: Website, id: string, access: { members: true; plans: string[] } | null): Website {
+  const page = mustPage(site, id);
+  if (access && page.type === 'home') throw new EditorError('The home page is always public. Restrict another page instead.');
+  return replacePage(site, id, (p) => {
+    const next = { ...p };
+    if (access) next.access = { members: true, plans: [...new Set(access.plans)].slice(0, 20) };
+    else delete next.access;
+    return next;
+  });
+}
+
 export function setPageChrome(site: Website, id: string, patch: { hideHeader?: boolean; hideFooter?: boolean }): Website {
   return replacePage(site, id, (p) => ({ ...p, config: { ...p.config, ...patch } }));
 }

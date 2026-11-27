@@ -124,3 +124,46 @@ describe('misc', () => {
     expect(deploymentTag(id)).not.toContain('1111');
   });
 });
+
+describe('module pages', () => {
+  const site = (): Website =>
+    validateWebsite({
+      schemaVersion: 1, id: 'm', name: 'Shop', type: 'store',
+      pages: [
+        { id: 'home', name: 'Home', slug: 'home', type: 'home', sections: [{ id: 'h', type: 'text', content: { body: 'Hi' } }] },
+        { id: 'blog', name: 'Blog', slug: 'blog', sections: [{ id: 'b', type: 'blog', content: { heading: 'News' } }] },
+        { id: 'about', name: 'About', slug: 'about', sections: [{ id: 'a', type: 'text', content: { body: 'About us' } }] },
+        { id: 'vip', name: 'VIP', slug: 'vip', access: { members: true, plans: [] }, sections: [{ id: 'v', type: 'text', content: { body: 'Secret plans' } }] },
+      ],
+    }).website!;
+  it('answers item addresses only below pages with a detail-capable module section', async () => {
+    const { resolvePath } = await import('./render');
+    expect(resolvePath(site(), ['blog', 'hello'])).toMatchObject({ kind: 'page', canonical: '/blog/hello', sub: ['hello'] });
+    expect(resolvePath(site(), ['about', 'hello'])).toEqual({ kind: 'missing' });
+    expect(resolvePath(site(), ['blog', 'Bad_Slug'])).toEqual({ kind: 'missing' });
+    expect(resolvePath(site(), ['blog', 'a', 'b', 'c', 'd'])).toEqual({ kind: 'missing' });
+  });
+  it('renders live module data and item metadata, and a 404 for unknown items', () => {
+    const data = { b: { mode: 'post', post: { slug: 'hello', title: 'Hello world', date: '2026-01-02T00:00:00Z', categories: [], membersOnly: false, body: [{ type: 'paragraph', text: 'Body text' }], tags: [], loginHref: null }, related: [] } };
+    const r = renderDocument(site(), ['blog', 'hello'], host, { moduleData: data, query: {}, locked: null, meta: { title: 'Hello world', description: 'A post' } });
+    expect(r.status).toBe(200);
+    expect(r.html).toContain('<title>Hello world | Shop</title>');
+    expect(r.html).toContain('Body text');
+    expect(r.html).toContain('<link rel="canonical" href="https://cafe.sites.example.test/blog/hello">');
+    expect(renderDocument(site(), ['blog', 'nope'], host, { moduleData: {}, query: {}, locked: null, notFound: true }).status).toBe(404);
+  });
+  it('never renders the sections of a locked page, and does not index it', () => {
+    const r = renderDocument(site(), ['vip'], host, { moduleData: {}, query: {}, locked: { loginHref: '/account' } });
+    expect(r.html).not.toContain('Secret plans');
+    expect(r.html).toContain('href="/account"');
+    expect(r.html).toContain('<meta name="robots" content="noindex">');
+    expect(sitemapXml(site(), host, null, ['/blog/hello'])).not.toContain('/vip');
+    expect(sitemapXml(site(), host, null, ['/blog/hello'])).toContain('https://cafe.sites.example.test/blog/hello');
+  });
+  it('builds module pages deterministically without live data (deployment verification)', () => {
+    const s = site();
+    expect(buildPages(s, host)).toEqual(buildPages(s, host));
+    const blog = renderDocument(s, ['blog'], pathMode);
+    expect(blog.html).toContain('Content from this module appears here.');
+  });
+});

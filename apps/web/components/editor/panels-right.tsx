@@ -13,6 +13,7 @@ import {
   moveSectionBy,
   setContactSettings,
   setHomePage,
+  setPageAccess,
   setPageChrome,
   setPageSeo,
   setPageSlug,
@@ -29,6 +30,8 @@ import {
   type PageLayoutId,
 } from '@saitify/editor';
 import { defaultRegistry, type BlockCategory, type Tone } from '@saitify/engine';
+import { useModules } from './module-context';
+import { useOptions } from '../modules/shared';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog } from '../app/dialog';
 import { Button } from '../app/primitives';
@@ -68,6 +71,37 @@ function Segmented<T extends string>({ label, value, options, onChange }: { labe
 const TONE_LABELS: Record<Tone, string> = { default: 'Standard', surface: 'Soft panel', primary: 'Brand color', inverse: 'Dark', gradient: 'Gradient' };
 
 /* ------------------------------------------------------------ page inspector */
+
+/** Memberships: who may open this page. The live website enforces it on the server; nothing restricted is sent to others. */
+function PageAccess({ api, pageId, report }: { api: EditorApi; pageId: string; report: Report }) {
+  const { active, projectId } = useModules();
+  const page = findPageById(api.site, pageId);
+  const plans = useOptions(projectId, 'members', active.includes('members') ? 'plan' : undefined);
+  if (!page || (!active.includes('members') && !page.access)) return null;
+  const set = (access: { members: true; plans: string[] } | null) => report(api.edit('Change who can see the page', (s) => setPageAccess(s, pageId, access)));
+  const chosen = new Set(page.access?.plans ?? []);
+  return (
+    <Section title="Who can see this page">
+      {page.type === 'home' ? <p className="text-[13px] text-midnight/70">The home page is always public.</p> : (
+        <>
+          <Select label="Visible to" value={page.access ? 'members' : 'everyone'} options={[{ value: 'everyone', label: 'Everyone' }, { value: 'members', label: 'Members only' }]} onChange={(v) => set(v === 'members' ? { members: true, plans: [] } : null)} />
+          {!active.includes('members') ? <p className="text-[13px] text-amber-900">Memberships is switched off, so this page cannot be published until it is on again or the page is public.</p> : null}
+          {page.access && plans && plans.length > 1 ? (
+            <fieldset className="space-y-1.5">
+              <legend className="text-[13px] font-semibold text-midnight/80">Plans (none chosen = any active plan)</legend>
+              {plans.filter((p) => p.slug).map((p) => (
+                <label key={p.id} className="flex min-h-11 items-center gap-2 text-[15px]">
+                  <input type="checkbox" className="size-5 accent-violet" checked={chosen.has(p.slug!)} onChange={() => { const n = new Set(chosen); if (n.has(p.slug!)) n.delete(p.slug!); else n.add(p.slug!); set({ members: true, plans: [...n] }); }} />
+                  {p.title}
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+        </>
+      )}
+    </Section>
+  );
+}
 
 export function PageInspector({ api, pageId, report, onSiteSettings }: { api: EditorApi; pageId: string; report: Report; onSiteSettings: () => void }) {
   const { site } = api;
@@ -118,6 +152,7 @@ export function PageInspector({ api, pageId, report, onSiteSettings }: { api: Ed
         <TextControl label="Search title" value={page.seo.title ?? ''} required={false} max={120} multiline={false} path="page.seo.title" hint="Leave empty to use the page name and website name." onCommit={(v) => run('Edit search title', (s) => setPageSeo(s, pageId, { title: v }), `seo-title:${pageId}`)} />
         <TextControl label="Search description" value={page.seo.description ?? ''} required={false} max={300} multiline path="page.seo.description" hint="A sentence or two shown under your page in search results." onCommit={(v) => run('Edit search description', (s) => setPageSeo(s, pageId, { description: v }), `seo-desc:${pageId}`)} />
       </Section>
+      <PageAccess api={api} pageId={pageId} report={report} />
       <Section title="Header and footer">
         {(['hideHeader', 'hideFooter'] as const).map((k) => (
           <label key={k} className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl border border-midnight/15 px-3 text-[15px]">
@@ -233,7 +268,10 @@ export function SectionInspector({ api, selection, pageId, pages, report, onDele
 export function AddSectionDialog({ open, onClose, onChoose }: { open: boolean; onClose: () => void; onChoose: (type: string) => void }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<'all' | BlockCategory>('all');
-  const blocks = defaultRegistry.list();
+  const { active, projectId } = useModules();
+  // Module sections are offered only while their module is on; everything else is always available.
+  const blocks = defaultRegistry.list().filter((b) => !b.module || active.includes(b.module));
+  const hiddenModules = defaultRegistry.list().some((b) => b.module && !active.includes(b.module));
   const cats = Array.from(new Set(blocks.map((b) => b.category)));
   const shown = blocks.filter((b) => (cat === 'all' || b.category === cat) && (!q.trim() || `${b.name} ${b.description} ${CATEGORY_LABELS[b.category]}`.toLowerCase().includes(q.trim().toLowerCase())));
   useEffect(() => {
@@ -266,7 +304,10 @@ export function AddSectionDialog({ open, onClose, onChoose }: { open: boolean; o
           </li>
         ))}
       </ul>
-      <div className="mt-5 flex justify-end"><Button variant="secondary" onClick={onClose}>Cancel</Button></div>
+      <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {hiddenModules ? <p className="text-[13.5px] text-midnight/70">Need a store, bookings or a blog? <a className="font-semibold text-violet underline" href={`/dashboard/projects/${projectId}/modules`}>Switch on a module</a> to add its sections.</p> : <span />}
+        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+      </div>
     </Dialog>
   );
 }

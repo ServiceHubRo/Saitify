@@ -196,3 +196,23 @@ export async function assertModuleActive(db: Db, projectId: string, id: ModuleId
   if (!s) throw new ProjectError('invalid', `${getModule(id)!.name} is switched off for this website. Switch it on in Modules first.`, { code: 'module_inactive', module: id });
   return s;
 }
+
+/**
+ * Switches on the modules chosen in the configurator. Each module is checked on its own (plan access included), so one that
+ * is not allowed never blocks the others or the project itself; the result says what happened.
+ */
+export async function enableChosenModules(db: Db, ownerId: string, projectId: string, ids: unknown): Promise<{ enabled: ModuleId[]; failed: { id: ModuleId; reason: string }[] }> {
+  const list = Array.isArray(ids) ? ids.filter(isModuleId).slice(0, 12) : [];
+  const enabled: ModuleId[] = [];
+  const failed: { id: ModuleId; reason: string }[] = [];
+  const already = await activeModules(db, projectId);
+  for (const id of list) {
+    if (already.has(id) || enabled.includes(id)) continue;
+    try {
+      enabled.push(...(await enableModule(db, ownerId, projectId, id)).enabled.filter((x) => !enabled.includes(x)));
+    } catch (e) {
+      failed.push({ id, reason: e instanceof Error ? e.message : 'Could not be switched on.' });
+    }
+  }
+  return { enabled, failed };
+}

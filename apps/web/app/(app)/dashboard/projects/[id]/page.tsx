@@ -1,7 +1,7 @@
 import '@saitify/engine/styles.css';
 import { getTemplate } from '@saitify/configurator';
 import type { WebsiteInput } from '@saitify/engine';
-import { STATUS_INFO, categoryName, getProject, getSiteState, openProject } from '@saitify/platform';
+import { MODULES, STATUS_INFO, activeModules, categoryName, getProject, getSiteState, openProject } from '@saitify/platform';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -29,6 +29,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
   const tpl = getTemplate(project.templateId);
   const status = STATUS_INFO[project.status];
   const site = project.site !== null ? await getSiteState(db, session.user.id, project.id, hosting()) : null;
+  const active = await activeModules(db, project.id);
+  const activeDefs = MODULES.filter((m) => active.has(m.id));
 
   return (
     <>
@@ -56,6 +58,22 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           <div className="min-w-0 space-y-8">
             {site && project.status !== 'archived' ? <WebsitePanel projectId={project.id} initial={site} /> : null}
+            <section aria-labelledby="modules-title" className="rounded-3xl border border-midnight/10 bg-white p-5 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 id="modules-title" className="text-lg font-semibold text-midnight">Modules</h2>
+                  <p className="mt-1 text-[15px] text-midnight/70">{activeDefs.length ? 'Functionality switched on for this website.' : 'Add a store, bookings, a blog, forms and more when you need them.'}</p>
+                </div>
+                <Link href={`/dashboard/projects/${project.id}/modules`} className={buttonClass(activeDefs.length ? 'secondary' : 'primary', 'shrink-0')}>{activeDefs.length ? 'All modules' : 'Add modules'}</Link>
+              </div>
+              {activeDefs.length ? (
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {activeDefs.map((m) => (
+                    <li key={m.id}><Link href={`/dashboard/projects/${project.id}/modules/${m.id}`} className="inline-flex min-h-11 items-center rounded-full border border-midnight/15 px-4 text-[15px] font-semibold text-midnight hover:border-violet hover:text-violet">{m.name}</Link></li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
             {opened.website ? (
               <Preview project={{ website: opened.website, config: project.site as WebsiteInput }} />
             ) : (

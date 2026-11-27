@@ -2,6 +2,15 @@ import type { SVGProps } from 'react';
 
 const P: Record<string, string> = {
   undo: 'M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  // Module icons (Phase 8)
+  form: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h3',
+  cart: 'M3 4h2l2.4 11h10.2L20 8H7M10 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
+  ticket: 'M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM14 7v10',
+  list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 7.5M19 21a6 6 0 0 0-3-5.2',
+  book: 'M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2zM4 5v16M8 7h8',
+  puzzle: 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4h2a2 2 0 1 0 0-4H6V6h4z',
   redo: 'm15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
   desktop: 'M3 5h18v11H3zM9 20h6M12 16v4',
   tablet: 'M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',

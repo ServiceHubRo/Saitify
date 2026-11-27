@@ -38,6 +38,11 @@ const en: Dict = {
   'ph.page': 'Write the content of this page.',
   'ph.alt': 'Describe this picture',
   'gallery.image': 'Picture {n}',
+  'mod.blog': 'Blog', 'mod.shop': 'Shop', 'mod.cart': 'Cart', 'mod.book': 'Book online', 'mod.events': 'Events', 'mod.directory': 'Directory',
+  'mod.account': 'Account', 'mod.courses': 'Courses',
+  'mod.blog.heading': 'Latest posts', 'mod.shop.heading': 'Shop', 'mod.cart.heading': 'Your cart', 'mod.book.heading': 'Book an appointment',
+  'mod.events.heading': 'Upcoming events', 'mod.directory.heading': 'Directory', 'mod.account.heading': 'Members', 'mod.courses.heading': 'Courses',
+  'mod.form.heading': 'Send us a message',
 };
 
 const ro: Dict = {
@@ -76,6 +81,11 @@ const ro: Dict = {
   'ph.page': 'Scrie aici conținutul paginii.',
   'ph.alt': 'Descrie imaginea',
   'gallery.image': 'Imaginea {n}',
+  'mod.blog': 'Blog', 'mod.shop': 'Magazin', 'mod.cart': 'Coș', 'mod.book': 'Programare online', 'mod.events': 'Evenimente', 'mod.directory': 'Director',
+  'mod.account': 'Cont', 'mod.courses': 'Cursuri',
+  'mod.blog.heading': 'Cele mai noi articole', 'mod.shop.heading': 'Magazin', 'mod.cart.heading': 'Coșul tău', 'mod.book.heading': 'Programează-te',
+  'mod.events.heading': 'Evenimente viitoare', 'mod.directory.heading': 'Director', 'mod.account.heading': 'Membri', 'mod.courses.heading': 'Cursuri',
+  'mod.form.heading': 'Trimite-ne un mesaj',
 };
 
 const DICTS: Record<Lang, Dict> = { en, ro };

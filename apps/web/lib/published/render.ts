@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { SiteRenderer, defaultHref, findPage, getHomePage, resolveDesign, resolvePageMetadata, validateWebsite, type Page, type Website } from '@saitify/engine';
+import { SiteRenderer, defaultHref, defaultRegistry, findPage, getHomePage, resolveDesign, resolvePageMetadata, validateWebsite, type ImageRef, type Page, type Website } from '@saitify/engine';
 import { createElement } from 'react';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -48,19 +48,38 @@ const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c').
 
 export type RenderedPage = { status: 200 | 404; html: string; title: string; path: string | null; canonicalPath: string | null };
 
-/** Normalizes a request path into a page slug ('' = home), or reports that a redirect to the canonical form is needed. */
-export function resolvePath(website: Website, segments: string[]): { kind: 'page'; page: Page; canonical: string } | { kind: 'redirect'; to: string } | { kind: 'missing' } {
+const SUB_SEGMENT = /^[a-z0-9][a-z0-9-]{0,79}$/;
+/** A page answers addresses below it only when it shows a module section that has item pages (posts, products…). */
+export const acceptsSubpaths = (page: Page) => page.sections.some((s) => s.visible && defaultRegistry.get(s.type)?.detail);
+
+/** Normalizes a request path into a page (and the item path below it), or reports that a redirect to the canonical form is needed. */
+export function resolvePath(website: Website, segments: string[]): { kind: 'page'; page: Page; canonical: string; sub: string[] } | { kind: 'redirect'; to: string } | { kind: 'missing' } {
   const home = getHomePage(website);
-  if (segments.length === 0) return { kind: 'page', page: home, canonical: '/' };
-  if (segments.length > 1) return { kind: 'missing' };
+  if (segments.length === 0) return { kind: 'page', page: home, canonical: '/', sub: [] };
+  if (segments.length > 4) return { kind: 'missing' };
   const slug = segments[0]!;
   const page = findPage(website, slug);
   if (!page) return { kind: 'missing' };
+  const sub = segments.slice(1);
+  if (sub.length) {
+    if (!acceptsSubpaths(page) || !sub.every((x) => SUB_SEGMENT.test(x))) return { kind: 'missing' };
+    return { kind: 'page', page, canonical: `/${[page.slug, ...sub].join('/')}`, sub };
+  }
   if (page.id === home.id) return { kind: 'redirect', to: '/' }; // the home page has one address
-  return { kind: 'page', page, canonical: defaultHref(website, page) };
+  return { kind: 'page', page, canonical: defaultHref(website, page), sub: [] };
 }
 
-export function renderDocument(input: unknown, segments: string[], ctx: PublicContext): RenderedPage & { redirect?: string } {
+/** Live module data for one request (see @saitify/platform `loadPageModules`). Absent while building a deployment. */
+export type ModuleRender = {
+  moduleData: Record<string, unknown>;
+  query: Record<string, string>;
+  locked: { loginHref: string | null; message?: string } | null;
+  meta?: { title: string; description?: string; image?: ImageRef };
+  /** Missing item (unknown post, product …): render the site's 404. */
+  notFound?: boolean;
+};
+
+export function renderDocument(input: unknown, segments: string[], ctx: PublicContext, mod?: ModuleRender): RenderedPage & { redirect?: string } {
   const v = validateWebsite(input);
   if (!v.website) throw new Error('snapshot is not renderable');
   const website = prefixLinks(v.website, ctx.prefix);
@@ -69,15 +88,22 @@ export function renderDocument(input: unknown, segments: string[], ctx: PublicCo
 
   const design = resolveDesign(website.design);
   const home = getHomePage(website);
-  const isMissing = resolved.kind === 'missing';
-  const page = isMissing ? undefined : website.pages.find((p) => p.id === resolved.page.id)!;
-  const meta = page ? resolvePageMetadata(website, page) : { title: `Page not found | ${website.name}`, description: undefined, ogImage: undefined };
-  const canonicalPath = isMissing ? null : resolved.canonical;
+  const isMissing = resolved.kind === 'missing' || Boolean(mod?.notFound);
+  const page = isMissing || resolved.kind !== 'page' ? undefined : website.pages.find((p) => p.id === resolved.page.id)!;
+  const base = page ? resolvePageMetadata(website, page) : { title: `Page not found | ${website.name}`, description: undefined, ogImage: undefined };
+  const meta = page && mod?.meta ? { title: `${mod.meta.title} | ${website.name}`, description: mod.meta.description ?? base.description, ogImage: mod.meta.image ?? base.ogImage } : base;
+  const canonicalPath = isMissing || resolved.kind !== 'page' ? null : resolved.canonical;
+  // Restricted pages and per-visitor pages (cart, account) are never indexed.
+  const noindex = Boolean(mod?.locked) || Boolean(page?.access);
   const canonical = canonicalPath === null ? null : `${ctx.base}${canonicalPath === '/' ? '/' : canonicalPath}`;
 
   const hrefFor = (p: Page) => `${ctx.prefix}${defaultHref(v.website!, p)}`;
   const body = renderToStaticMarkup(
-    createElement(SiteRenderer, { website, pageSlug: page?.slug ?? '__missing__', mode: 'public', resolveHref: (p: Page) => hrefFor(p), year: ctx.year }),
+    createElement(SiteRenderer, {
+      website, pageSlug: page?.slug ?? '__missing__', mode: 'public', resolveHref: (p: Page) => hrefFor(p), year: ctx.year,
+      moduleData: mod?.moduleData, locked: mod?.locked ?? undefined,
+      route: { sub: resolved.kind === 'page' ? resolved.sub : [], query: mod?.query ?? {}, prefix: ctx.prefix, actionBase: `${ctx.prefix}/_m` },
+    }),
   );
 
   const ogImage = meta.ogImage && meta.ogImage.src.startsWith('https://') ? meta.ogImage.src : null;
@@ -101,7 +127,7 @@ export function renderDocument(input: unknown, segments: string[], ctx: PublicCo
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${esc(meta.title)}</title>`,
     meta.description ? `<meta name="description" content="${esc(meta.description)}">` : '',
-    canonical ? `<link rel="canonical" href="${esc(canonical)}">` : '<meta name="robots" content="noindex">',
+    canonical && !noindex ? `<link rel="canonical" href="${esc(canonical)}">` : '<meta name="robots" content="noindex">',
     `<meta name="theme-color" content="${esc(design.colors.primary)}">`,
     `<meta property="og:type" content="website"><meta property="og:site_name" content="${esc(website.name)}"><meta property="og:title" content="${esc(meta.title)}">`,
     meta.description ? `<meta property="og:description" content="${esc(meta.description)}">` : '',
@@ -137,13 +163,14 @@ export function buildPages(website: Website, ctx: PublicContext) {
   });
 }
 
-export function sitemapXml(website: Website, ctx: PublicContext, lastmod: string | null): string {
+export function sitemapXml(website: Website, ctx: PublicContext, lastmod: string | null, extraPaths: string[] = []): string {
   const urls = website.pages
-    .filter((p) => p.visible)
+    .filter((p) => p.visible && !p.access)
     .map((p) => {
       const path = defaultHref(website, p);
       return `  <url><loc>${esc(`${ctx.base}${path}`)}</loc>${lastmod ? `<lastmod>${esc(lastmod.slice(0, 10))}</lastmod>` : ''}</url>`;
     });
+  for (const path of extraPaths) urls.push(`  <url><loc>${esc(`${ctx.base}${path}`)}</loc></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 }
 
