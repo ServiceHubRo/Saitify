@@ -103,7 +103,7 @@ test.describe('projects', () => {
   test('another account cannot read, change, duplicate, archive or delete a project', async ({ page, browser, baseURL }) => {
     await register(page);
     const mine = await create(page.request, baseURL, 'Private Place');
-    const other = await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': '10.9.9.9' } });
+    const other = await browser.newContext({ baseURL });
     const op = await other.newPage();
     await register(op);
     const h = origin(baseURL);

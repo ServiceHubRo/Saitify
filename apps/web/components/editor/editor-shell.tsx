@@ -264,7 +264,7 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
         <div className="mx-auto hidden w-52 sm:block lg:mx-2">
           <Select label="Page" hideLabel searchable={site.pages.length > 8} value={page.id} options={site.pages.map((p) => ({ value: p.id, label: p.name, description: p.type === 'home' ? 'Home page' : `/${p.slug}${p.visible ? '' : ' · hidden'}` }))} onChange={(id) => (setPageId(id), setSelection(null))} />
         </div>
-        <div className="ml-auto flex items-center gap-0.5">
+        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-0.5">
           <div role="group" aria-label="Preview size" className="flex rounded-xl bg-midnight/6 p-0.5">
             {DEVICES.map((d) => (
               <button key={d.id} type="button" aria-pressed={device === d.id} aria-label={`${d.label} preview`} title={`${d.label} (${d.width}px)`} onClick={() => setDevice(d.id)} className={`grid size-10 place-items-center rounded-[10px] transition focus-visible:outline-2 focus-visible:outline-violet ${device === d.id ? 'bg-white text-violet shadow-sm' : 'text-midnight/65 hover:text-midnight'}`}>

@@ -42,7 +42,7 @@ test.describe('registration', () => {
   test('a duplicate email gets the same generic answer, no session, and the owner is notified', async ({ page, browser }) => {
     const email = await register(page);
     await expect(page).toHaveURL(/\/dashboard$/);
-    const other = await browser.newContext({ extraHTTPHeaders: { 'x-test-ip': '10.77.1.1' } });
+    const other = await browser.newContext();
     const p2 = await other.newPage();
     await register(p2, { email, password: 'a-completely-different-pw', signedIn: false });
     await expect(p2.getByTestId('register-check-email')).toContainText('If');
@@ -170,7 +170,7 @@ test.describe('email verification', () => {
     await expect(page.getByText(`${email} is not confirmed yet`)).toBeVisible();
     const link = await waitForLink(email, /Confirm your email/);
     expect(link).toMatch(/^\/verify-email#token=/);
-    const other = await browser.newContext({ extraHTTPHeaders: { 'x-test-ip': '10.88.2.2' } });
+    const other = await browser.newContext();
     const p2 = await other.newPage();
     await p2.goto(link);
     await expect(p2.getByTestId('token-success')).toContainText('confirmed');
@@ -207,7 +207,7 @@ test.describe('email verification', () => {
 test.describe('password recovery', () => {
   test('is silent about unknown emails, resets once, and signs out every device', async ({ page, browser }) => {
     const email = await register(page);
-    const second = await browser.newContext({ extraHTTPHeaders: { 'x-test-ip': '10.99.3.3' } });
+    const second = await browser.newContext();
     const p2 = await second.newPage();
     await signIn(p2, email);
     await expect(p2).toHaveURL(/\/dashboard$/);
@@ -270,7 +270,7 @@ test.describe('account settings', () => {
     await page.getByRole('button', { name: 'Change password' }).click();
     await expect(page.getByText('That is not your current password.')).toBeVisible();
 
-    const other = await browser.newContext({ extraHTTPHeaders: { 'x-test-ip': '10.55.4.4' } });
+    const other = await browser.newContext();
     const p2 = await other.newPage();
     await signIn(p2, email);
     await expect(p2).toHaveURL(/\/dashboard$/);

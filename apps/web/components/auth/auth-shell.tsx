@@ -6,9 +6,9 @@ export function AuthShell({ title, intro, children, footer }: { title: string; i
   return (
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
       <div className="flex flex-col bg-white px-5 py-6 sm:px-10">
-        <div className="flex items-center justify-between">
+        <header className="flex items-center justify-between">
           <Logo />
-        </div>
+        </header>
         <main id="main" className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
           <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-[2.1rem]">{title}</h1>
           {intro ? <p className="mt-3 text-base leading-relaxed text-midnight/70">{intro}</p> : null}

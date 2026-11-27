@@ -65,3 +65,9 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - **D-095 CSP is baseline, not strict, for the app.** No `script-src` yet (needs per-request nonces with Next.js); published customer websites keep their strict policy.
 - **D-096 No legal text is invented.** Facts about what the service does are stated; every legal commitment stays a flagged placeholder until a qualified person writes it.
 
+## Phase 10
+- **D-100 Validation by behaviour, not by presence.** A control counts as working only when its effect was checked in the saved data, the screen and after a reload; the journeys diff the saved website before and after every edit.
+- **D-101 The test suite runs at 7 viewports** (360, 390, 430, 768, 1024, 1280, 1440). Extra browser contexts get their own random fake network address (no fixed addresses), because the product's hourly sign-up limit is per address and a shared one made the suite fail only when run at 7 viewports.
+- **D-102 The store's limits are recorded, not hidden.** `PHASE10-CAPABILITY-INVENTORY.md` is the source of requirements for the ecommerce phase; nothing was added to the store in Phase 10.
+- **D-103 Published websites may load their own icon** (`img-src 'self'`); everything else about their policy is unchanged.
+

@@ -27,3 +27,7 @@ Done on branch `phase-7-billing` (stacked on phase 6): rebrand to Saitlify, Stri
 
 ## Phase 9 — Production readiness and beta preparation
 Done on branch `claude/saitlify-phase-9-beta-readiness` (**not merged, not deployed**): audit first (`PHASE9-AUDIT.md`), authentication required to build (edge + server + API), Stripe subscription canceled on account deletion, hardened contact endpoint, security headers, structured logging, honest marketing site with real templates and an interactive homepage product demo, accessibility and layout-stability fixes, truthful draft legal pages, tests (axe, demo, stability, deletion). Report: `PHASE9.md`; launch list: `BETA-CHECKLIST.md`; interface review: `PHASE9-UX.md`. Status: READY FOR INTERNAL TESTING.
+
+## Phase 10 — Internal testing and product validation
+Done on branch `claude/saitlify-phase-10-internal-testing` (**not merged, not deployed**): real-user journeys through the wizard, editor, preview, publishing, all modules, the store and billing; 7-viewport sweep, accessibility and performance measurements; store and capability inventory with an ecommerce gap audit and roadmap; 4 defects fixed (editor toolbar unreachable on phones, published-site favicon CSP, footer tap targets, auth landmark). Reports: `PHASE10.md`, `PHASE10-AUDIT.md`, `PHASE10-TEST-RESULTS.md`, `PHASE10-ISSUES.md`, `PHASE10-CAPABILITY-INVENTORY.md`. Status: READY FOR INTERNAL TESTING.
+
