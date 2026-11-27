@@ -20,10 +20,10 @@ export function ProjectCard({ p }: { p: ProjectSummary }) {
       <h3 id={`p-${p.id}`} className="mt-3 text-lg font-semibold leading-snug tracking-tight text-midnight [overflow-wrap:anywhere]">
         <Link href={`/dashboard/projects/${p.id}`} className="rounded hover:text-violet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet">{p.name}</Link>
       </h3>
-      <dl className="mt-3 space-y-1 text-sm text-midnight/70">
-        <div className="flex gap-1.5"><dt className="sr-only">Template</dt><dd>{tpl ? `Template: ${tpl.name}` : 'No template'}</dd></div>
-        <div className="flex flex-wrap gap-x-3"><div><dt className="inline">Created </dt><dd className="inline"><time dateTime={p.createdAt}>{formatDate(p.createdAt)}</time></dd></div>
-        <div><dt className="inline">Updated </dt><dd className="inline"><time dateTime={p.updatedAt}>{formatDate(p.updatedAt)}</time></dd></div></div>
+      <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-midnight/70">
+        <div className="w-full"><dt className="sr-only">Template</dt><dd>{tpl ? `Template: ${tpl.name}` : 'No template'}</dd></div>
+        <div><dt className="inline">Created </dt><dd className="inline"><time dateTime={p.createdAt}>{formatDate(p.createdAt)}</time></dd></div>
+        <div><dt className="inline">Updated </dt><dd className="inline"><time dateTime={p.updatedAt}>{formatDate(p.updatedAt)}</time></dd></div>
       </dl>
       <div className="mt-5 flex items-center justify-between gap-3 pt-1">
         {p.hasSite && p.status !== 'archived' ? (

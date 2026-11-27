@@ -26,7 +26,7 @@ const Row = ({ label, children }: { label: string; children: ReactNode }) => (
     <dd className="text-midnight">{children}</dd>
   </>
 );
-const none = <span className="text-midnight/50">Not set</span>;
+const none = <span className="text-midnight/65">Not set</span>;
 
 export type FinishProps =
   | { mode: 'project'; projectId: string; status: SyncStatus; onOpen: () => void; opening: boolean }

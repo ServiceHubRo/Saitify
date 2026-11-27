@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { Logo } from '../logo';
 
 /** Split layout: a calm form on the left, a short brand panel on large screens. No marketing header: the form is the focus. */
@@ -9,7 +8,6 @@ export function AuthShell({ title, intro, children, footer }: { title: string; i
       <div className="flex flex-col bg-white px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <Logo />
-          <Link href="/" className="inline-flex min-h-11 items-center rounded px-2 text-sm font-medium text-midnight/70 hover:text-violet focus-visible:outline-2 focus-visible:outline-violet">Back to site</Link>
         </div>
         <main id="main" className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
           <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-[2.1rem]">{title}</h1>

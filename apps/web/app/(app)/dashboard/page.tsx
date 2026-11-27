@@ -2,9 +2,9 @@ import { CATEGORY_NAMES } from '@saitify/configurator';
 import { listCategories, listProjects, type ListQuery } from '@saitify/platform';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ProjectCard, formatDate } from '../../../components/app/project-card';
+import { ProjectCard } from '../../../components/app/project-card';
 import { ProjectFilters } from '../../../components/app/project-filters';
-import { LinkButton, buttonClass } from '../../../components/app/primitives';
+import { LinkButton } from '../../../components/app/primitives';
 import { VerifyBanner } from '../../../components/app/verify-banner';
 import { isFiltered, parseFilters, type FilterState } from '../../../lib/filters';
 import { getCtx } from '../../../lib/server/platform';
@@ -27,7 +27,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const [{ items, counts }, categoryIds] = await Promise.all([listProjects(db, session.user.id, toQuery(filters)), listCategories(db, session.user.id)]);
   const first = session.user.name.trim().split(/\s+/)[0] ?? 'there';
   const filtered = isFiltered(filters);
-  const latest = !filtered ? items[0] : undefined;
 
   return (
     <>
@@ -38,7 +37,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <h1 className="text-3xl font-semibold tracking-tight text-midnight sm:text-4xl">{counts.total === 0 ? `Welcome to Saitlify, ${first}` : `Welcome back, ${first}`}</h1>
           <p className="mt-2 text-lg text-midnight/70">{counts.total === 0 ? 'Your account is ready. Let’s build your first website.' : 'Pick up where you left off, or start something new.'}</p>
         </div>
-        {counts.total > 0 ? <LinkButton href="/create" className="min-h-12">Create a new website</LinkButton> : null}
       </div>
 
       {counts.total === 0 ? (
@@ -71,17 +69,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </Link>
             ))}
           </section>
-
-          {latest ? (
-            <section aria-labelledby="latest-title" className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-midnight p-5 text-white sm:p-6">
-              <div className="min-w-0">
-                <h2 id="latest-title" className="text-sm font-semibold uppercase tracking-[0.12em] text-lavender">Continue where you left off</h2>
-                <p className="mt-1 truncate text-xl font-semibold [overflow-wrap:anywhere]">{latest.name}</p>
-                <p className="text-sm text-white/70">Last edited {formatDate(latest.updatedAt)} · {CATEGORY_NAMES[latest.category ?? ''] ?? 'Not chosen yet'}</p>
-              </div>
-              <Link href={`/edit/${latest.id}`} className={buttonClass('secondary', 'border-transparent')}>Continue editing<span className="sr-only"> {latest.name}</span></Link>
-            </section>
-          ) : null}
 
           <section aria-labelledby="projects-title" className="mt-10">
             <h2 id="projects-title" className="text-2xl font-semibold tracking-tight text-midnight">Your projects</h2>

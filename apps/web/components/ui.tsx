@@ -98,7 +98,7 @@ export function Badge({
 }) {
   const styles = {
     violet: 'bg-violet/10 text-violet',
-    blue: 'bg-blue/10 text-blue',
+    blue: 'bg-blue/10 text-midnight',
     neutral: 'bg-midnight/5 text-midnight/70',
   }[tone];
   return (
