@@ -25,8 +25,9 @@ const render = (website: unknown, pageSlug?: string, mode: 'public' | 'preview' 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
 describe('registry', () => {
-  it('contains the 14 initial blocks with unique types', () => {
-    expect(defaultRegistry.list()).toHaveLength(14);
+  it('contains the 14 initial blocks plus 10 module blocks, all with unique types', () => {
+    expect(defaultRegistry.list()).toHaveLength(24);
+    expect(defaultRegistry.list().filter((b) => b.module)).toHaveLength(10);
     expect(new Set(INITIAL_BLOCKS.map((b) => b.type)).size).toBe(14);
   });
   it('rejects duplicate types and invalid default variants', () => {

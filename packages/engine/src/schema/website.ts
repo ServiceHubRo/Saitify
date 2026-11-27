@@ -75,6 +75,13 @@ export const pageSchema = z.object({
   config: z
     .object({ hideHeader: z.boolean().default(false), hideFooter: z.boolean().default(false) })
     .prefault({}),
+  /**
+   * Who may see the page (Memberships module). Absent means everyone. Enforced by the server that renders the published
+   * page: restricted content is never sent to visitors without access.
+   */
+  access: z
+    .object({ members: z.literal(true), plans: z.array(slugSchema).max(20).default([]) })
+    .optional(),
 });
 export type Page = z.output<typeof pageSchema>;
 

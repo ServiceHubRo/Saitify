@@ -13,6 +13,7 @@ import { servicesBlock } from './services';
 import { statsBlock } from './stats';
 import { testimonialsBlock } from './testimonials';
 import { textBlock } from './text';
+import { MODULE_BLOCKS } from '../modules';
 
 export const INITIAL_BLOCKS = [
   headerBlock,
@@ -31,5 +32,8 @@ export const INITIAL_BLOCKS = [
   footerBlock,
 ];
 
+/** Initial blocks plus the module blocks (Phase 8). Module blocks only appear in the editor while their module is active. */
+export const ALL_BLOCKS = [...INITIAL_BLOCKS, ...MODULE_BLOCKS];
+
 /** Registry with the initial block library. New blocks: `defaultRegistry.register(myBlock)`. */
-export const defaultRegistry = createRegistry(INITIAL_BLOCKS);
+export const defaultRegistry = createRegistry(ALL_BLOCKS);

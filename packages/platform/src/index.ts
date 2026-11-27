@@ -12,3 +12,4 @@ export * from './publishing/hosting';
 export * from './publishing/status';
 export * from './publishing/validate';
 export * from './publishing/service';
+export * from './modules';
