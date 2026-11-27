@@ -182,6 +182,17 @@ test('sitemap, robots and social image are served', async ({ request }) => {
   expect(og.headers()['content-type']).toContain('image/png');
 });
 
+test('the application sends its security headers and does not advertise the framework', async ({ request }) => {
+  for (const path of ['/', '/login', '/pricing']) {
+    const h = (await request.get(path)).headers();
+    expect(h['strict-transport-security'], path).toContain('max-age=');
+    expect(h['content-security-policy'], path).toContain("frame-ancestors 'none'");
+    expect(h['x-content-type-options'], path).toBe('nosniff');
+    expect(h['x-frame-options'], path).toBe('DENY');
+    expect(h['x-powered-by'], path).toBeUndefined();
+  }
+});
+
 test('unknown route shows the 404 page', async ({ page }) => {
   const response = await page.goto('/does-not-exist');
   expect(response?.status()).toBe(404);

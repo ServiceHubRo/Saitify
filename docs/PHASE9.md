@@ -58,7 +58,7 @@ Terms and Privacy now state what the service really does (accounts, data collect
 `packages/platform/src/log.ts`: one JSON line per event with level, event, route, method, request reference, error name and database error code; passwords, tokens, emails and cookies are redacted (tested). The API wrapper adds a short reference to every unexpected error response so a user report can be matched to a log line. Used in the API wrapper, public site route, publishing, webhooks and the Stripe client. No external monitoring was added (not required by the phase; recommended).
 
 ### M2 Headers
-`next.config.ts`: `Strict-Transport-Security` (`max-age=31536000`, one year), a baseline `Content-Security-Policy` (`object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`: it blocks plugins, framing and form hijacking without restricting scripts, because a full script policy needs per-request nonces and was left for later), and `X-Powered-By` removed. Published websites keep their own stricter CSP.
+`next.config.ts` and `proxy.ts`: `Strict-Transport-Security` (`max-age=31536000`, one year), a baseline `Content-Security-Policy` (`object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`: it blocks plugins, framing and form hijacking without restricting scripts, because a full script policy needs per-request nonces and was left for later), and `X-Powered-By` removed. Published websites keep their own stricter CSP. **A regression caught by the existing test suite during this phase:** the first version of this policy was set globally in `next.config.ts` and silently replaced the strict `default-src 'none'` policy of published websites (`e2e/publish.spec.ts` failed on all five viewports). It now lives in `proxy.ts` and is never applied to `/s/...`; `e2e/site.spec.ts` checks the application headers and `publish.spec.ts` checks the published-site policy.
 
 ### M4/M5 Accessibility and stability
 Valid `<dl>` structure on project cards; contrast fixes (blue badge, grey helper text in the review step and module lists); new `e2e/a11y.spec.ts` runs axe-core (WCAG 2.0/2.1 A+AA, serious and critical) on 11 public pages and 8 signed-in pages, desktop and mobile widths. The editor canvas no longer paints at the wrong scale before it measures itself (`components/editor/canvas.tsx`): layout shift **3.3–7.7 → 0.000**, locked in by `e2e/performance.spec.ts` at all five viewports.
@@ -85,7 +85,7 @@ Unchanged since the audit; see the table in `docs/PHASE9-AUDIT.md`: Forms, Blog,
 | `pnpm typecheck` (all packages) | clean |
 | `pnpm test` (unit and integration, real embedded Postgres) | **408 passed, 0 failed** (15 files) |
 | `pnpm build` | succeeds |
-| `pnpm e2e` (Playwright, 5 viewports: 1440, 1280, 768, 390, 360) | E2E_RESULT |
+| `pnpm e2e` (Playwright, 5 viewports: 1440, 1280, 768, 390, 360) | **826 passed, 0 failed, 14 skipped** (840 tests; the skipped ones are viewport-specific, e.g. the mobile menu on desktop). The first full run had 5 failures, all one real regression I introduced (see M2), fixed and re-run in full. |
 
 Measured before → after (local production build, Chromium, no network throttling; indicative, not a field measurement):
 

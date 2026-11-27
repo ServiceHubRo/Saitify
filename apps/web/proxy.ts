@@ -8,6 +8,13 @@ import { NextResponse, type NextRequest } from 'next/server';
  * the public renderer, so dashboard, editor and API routes can never be reached through a website's address.
  * The platform's own hosts (the base domain itself, www, app, …) and any other host pass straight through.
  */
+/**
+ * Baseline policy for the application's own pages. It closes whole classes of attack (no plugins, no framing, no <base> hijacking,
+ * forms post back to this site only) without restricting scripts: a script-src policy needs per-request nonces and is tracked in
+ * docs/BETA-CHECKLIST.md. Published websites (`/s/...`) are never given this one: they send their own, much stricter policy.
+ */
+const APP_CSP = "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'";
+
 export function proxy(req: NextRequest) {
   const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://saitify.ro').replace(/\/$/, '');
   const hosting = hostingFromEnv(process.env, appUrl);
@@ -47,7 +54,9 @@ export function proxy(req: NextRequest) {
     res.headers.set('Cache-Control', 'no-store');
     return res;
   }
-  return NextResponse.next({ request: { headers } });
+  const res = NextResponse.next({ request: { headers } });
+  if (path !== '/s' && !path.startsWith('/s/')) res.headers.set('Content-Security-Policy', APP_CSP);
+  return res;
 }
 
 export const config = { matcher: ['/((?!_next/static|_next/image).*)'] };
