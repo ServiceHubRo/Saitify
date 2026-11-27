@@ -5,3 +5,4 @@ export { STATUS_INFO, displayStatus, type DisplayStatus } from './projects/statu
 export * from './modules/catalog';
 export * from './modules/resources';
 export * from './modules/time';
+export { classifyChange, FREE_PLAN_ID, type Interval, type BillingStatus } from './billing/policy';

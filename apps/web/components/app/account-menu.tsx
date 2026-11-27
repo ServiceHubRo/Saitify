@@ -7,6 +7,7 @@ import { call } from './api-client';
 
 const LINKS = [
   { href: '/dashboard', label: 'Projects' },
+  { href: '/billing', label: 'Billing' },
   { href: '/account', label: 'Account' },
 ] as const;
 

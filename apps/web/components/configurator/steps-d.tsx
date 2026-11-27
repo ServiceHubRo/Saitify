@@ -48,7 +48,7 @@ export function ReviewStep({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${(state.info.name || 'website').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'website'}.saitify.json`;
+    a.download = `${(state.info.name || 'website').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'website'}.saitlify.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

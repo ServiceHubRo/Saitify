@@ -6,7 +6,7 @@ test.describe('registration', () => {
   test('creates an account, signs in, and shows the welcoming empty dashboard', async ({ page, context }) => {
     const email = await register(page, { name: 'Ana Pop' });
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(welcome(page)).toHaveText('Welcome to Saitify, Ana');
+    await expect(welcome(page)).toHaveText('Welcome to Saitlify, Ana');
     await expect(page.getByRole('heading', { name: 'Create your first website' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Create a website' })).toHaveAttribute('href', '/create');
     await expect(page.getByText(`${email} is not confirmed yet`)).toBeVisible();
@@ -224,7 +224,7 @@ test.describe('password recovery', () => {
     await page.getByLabel('Email').fill(email);
     await page.getByRole('button', { name: 'Send reset link' }).click();
     await expect(page.getByText(/If an account exists/)).toBeVisible();
-    const link = await waitForLink(email, /Reset your Saitify password/);
+    const link = await waitForLink(email, /Reset your Saitlify password/);
     await page.goto(link);
     await expect.poll(() => page.url()).not.toContain('token');
     await page.getByLabel('New password', { exact: true }).fill('a-brand-new-passphrase');

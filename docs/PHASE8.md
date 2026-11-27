@@ -2,7 +2,7 @@
 
 Websites can now have real functionality: an online store, bookings, a blog, events, a directory, memberships, online courses and forms. Each is a **module** that the owner switches on per website. Modules are integrated into the existing configurator, editor, engine, publishing and project pages; there is no second dashboard, editor or publishing path.
 
-Branch `claude/saitlify-phase-8-modules-9oed7p`, built on `main` (Phase 6). Phase 7 (billing) is **not merged** here; see “Billing” below.
+Phase 8 was merged into `main` (PR #10). Phase 7 (billing and the Saitlify rebrand) is brought into the same line by the follow-up PR “Phase 7 + Phase 8 integration”, which also connects module access and limits to billing plans (see “Billing and entitlements”).
 
 ## Architecture
 
@@ -53,24 +53,25 @@ The features step has an **Add functionality (optional)** section listing the mo
 - Pages with module data or access rules are sent `Cache-Control: private, no-store`; static pages keep their ETag caching. Members-only pages are `noindex` and never in the sitemap; published posts, products, events, listings and courses are.
 - Deployment build/verification renders module sections without live data, so builds stay deterministic and rollback works unchanged.
 
-## Billing and entitlements (Phase 7 not merged)
-All module access and limits are decided in one place: `getModuleEntitlements` (`modules/entitlements.ts`). Limits: `forms_submissions_month`, `blog_posts`, `store_products`, `booking_bookings_month`, `events_events`, `directory_listings`, `members_members`, `courses_courses`. They are enforced on the server when creating items, when visitors book, submit forms or register, and when modules are switched on.
+## Billing and entitlements
+All module access and limits are decided in one place on the server: `getModuleEntitlements` (`modules/entitlements.ts`). It reads the account's **real billing plan** (`getEntitlements`, Phase 7), so a payment that lapses past its grace period resolves to the Free plan's limits automatically, and nothing is ever deleted.
 
-On this branch there is no plan system, so the resolver returns **platform caps**: every module included, generous fair-use caps (configurable with `MODULE_LIMIT_<KEY>` env vars), shown as “All modules are available … fair-use limits apply”. No plan or subscription state is invented.
+Administrators set module rules per plan at `/admin/plans` (a collapsed “Modules” section in the plan form), stored in the plan's `limits` JSON:
+- `modules`: the module ids the plan includes. **Absent = every module**, so plans created before modules existed, including Free as seeded, keep working and nothing is restricted unless an administrator chooses to.
+- Caps per website: `forms_submissions_month`, `blog_posts`, `store_products`, `booking_bookings_month`, `events_events`, `directory_listings`, `members_members`, `courses_courses`. A number is a cap, `null` is unlimited, absent means the platform fair-use cap (`PLATFORM_CAPS`, overridable with `MODULE_LIMIT_<KEY>`).
+- Plan cards on the pricing and billing pages list modules and caps only when an administrator set them. Nothing is invented for plans that do not mention modules.
 
-**To integrate Phase 7** after both are merged, register a resolver once at start-up (e.g. in `apps/web/lib/server/platform.ts`):
+Enforced on the server, never trusted from the browser:
+- **Switching a module on** (and chosen modules at project creation): refused with the plan's reason when the module is not included.
+- **Creating content** (products, posts, events, listings, courses): refused when the module is not in the plan or the cap is reached; the message names the plan and offers “See plans” when a better plan exists. **Editing and deleting stay possible**, so a downgrade never locks anyone out of their own data.
+- **Visitor actions that create records** (form submissions, bookings, member sign-ups) are checked against the monthly/total caps.
+- **Downgrade policy** (same principle as Phase 7: “every website that is online stays online”): functionality already live keeps working for visitors; the module shows “Not in your plan” in the dashboard and cannot get new content until the plan includes it.
+- `setModuleEntitlementResolver` still exists to replace the source (tests, another billing system); `platformEntitlements` (all modules, fair-use caps) is the fallback for that and for tests.
 
-```ts
-setModuleEntitlementResolver(async (db, userId) => {
-  const e = await getEntitlements(db, userId);           // Phase 7
-  return entitlementsFromPlanLimits(e.plan.name, e.plan.limits as Record<string, unknown>, { isTopPlan: false });
-});
-```
-
-Plan `limits` JSON may then contain `modules: ["forms", "blog", …]` (absent = all modules; existing `premium_modules` flag = all) and any of the limit keys above (`null` = unlimited, absent = platform cap). Existing plans keep working unchanged. The UI already shows “Not in your plan” with the reason and a “See plans” link when a real plan decides. Unit tests cover the mapping.
+Verified by `modules.test.ts` against real plans and subscriptions (Free, a paid plan with a module list and cap, a plan with unlimited products, a lapsed payment, a plan that excludes an already-used module) and by validation tests for administrator input.
 
 ## Database
-Migration `0005_modules` (additive only; numbered after Phase 7’s `0004_billing`, independent of it). Standalone script: `docs/sql/0005_modules.sql` (verified: applies on a database at 0003, is recognised by the migration runner, refuses to run twice).
+Migration `0005_modules` (additive only; numbered after Phase 7’s `0004_billing`; it does not depend on it, but the plan-based entitlements read the `plans` and `subscriptions` tables, so both migrations must be applied). Standalone script: `docs/sql/0005_modules.sql` (verified: applies on a database at 0003, is recognised by the migration runner, refuses to run twice).
 
 Tables: `project_modules` (PK project+module), `module_items` (typed columns + `data` jsonb; unique `(project_id, kind, slug)`, list and parent indexes), `site_members` (unique per project+email), `site_member_sessions`, `memberships` (one live membership per member+plan), `store_carts`, `store_orders` (unique order number per project), `store_order_items`, `bookings` (unique reference per project; time indexes), `event_registrations` (one active registration per email per event), `form_submissions`, `course_enrollments` (unique per course+member), `lesson_progress`, `app_secrets` (server secret for form tokens). All rows cascade from `projects`; references from orders to products are `set null` (orders keep their own copies); registrations, submissions, memberships and enrollments block deleting what they reference (the UI explains what to do instead).
 
@@ -90,7 +91,8 @@ Owner routes: session required, same-origin check, JSON-only bodies, per-user wr
 1. Run `docs/sql/0005_modules.sql` once in Supabase (or `pnpm --filter @saitify/platform db:migrate`).
 2. Email notifications (new orders, bookings, registrations, form answers; customer confirmations) need `RESEND_API_KEY` + `EMAIL_FROM`; without them everything works and nothing pretends to send.
 3. Optional: `MODULE_LIMIT_<KEY>` overrides for the platform caps.
-4. Card payments for stores, paid tickets and paid courses/plans need a payment provider integration (e.g. Stripe Connect) that does not exist yet.
+4. Card payments for stores, paid tickets and paid courses/plans need a payment provider integration (e.g. Stripe Connect) that does not exist yet. Stripe in Phase 7 is for Saitlify's own subscriptions only.
+5. Billing and plan setup: see `docs/PHASE7.md` (Stripe keys, webhook, `ADMIN_EMAILS`, `docs/sql/0004_billing.sql`). Apply `0004_billing` and `0005_modules` before the new code runs; the app refuses to start on a database with pending migrations.
 
 ## Known limitations
 - No file storage: images are https links; forms have no file uploads; course downloads are links.

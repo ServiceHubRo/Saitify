@@ -5,9 +5,9 @@ import { JOURNEY } from '../../../lib/site';
 export const metadata: Metadata = {
   title: 'How it works',
   description:
-    'The Saitify journey from idea to published website, in six clear steps. The website creator is in development.',
+    'The Saitlify journey from idea to published website, in six clear steps. The website creator is in development.',
   alternates: { canonical: '/how-it-works' },
-  openGraph: { url: '/how-it-works', title: 'How it works | Saitify' },
+  openGraph: { url: '/how-it-works', title: 'How it works | Saitlify' },
 };
 
 export default function HowItWorksPage() {

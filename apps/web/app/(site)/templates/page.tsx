@@ -6,9 +6,9 @@ import { TEMPLATES } from '../../../lib/site';
 export const metadata: Metadata = {
   title: 'Templates',
   description:
-    'A curated first selection of Saitify website designs for beauty, construction, photography, consulting, fitness and restaurants. Previews only.',
+    'A curated first selection of Saitlify website designs for beauty, construction, photography, consulting, fitness and restaurants. Previews only.',
   alternates: { canonical: '/templates' },
-  openGraph: { url: '/templates', title: 'Templates | Saitify' },
+  openGraph: { url: '/templates', title: 'Templates | Saitlify' },
 };
 
 export default function TemplatesPage() {

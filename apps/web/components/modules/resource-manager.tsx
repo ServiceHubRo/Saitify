@@ -1,6 +1,7 @@
 'use client';
 
 import { KIND_DEFS, type Kind } from '@saitify/platform/client';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { call } from '../app/api-client';
 import { Dialog } from '../app/dialog';
@@ -70,6 +71,7 @@ export function ResourceManager({ projectId, kind, currency = 'RON', ctx, onOpen
   const [editing, setEditing] = useState<null | { id: string | null; values: Values }>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [formUpgrade, setFormUpgrade] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Item | null>(null);
@@ -115,6 +117,7 @@ export function ResourceManager({ projectId, kind, currency = 'RON', ctx, onOpen
     if (!editing || busy) return;
     setBusy(true);
     setFormError(null);
+    setFormUpgrade(false);
     const r = await call<{ item: Item }>(editing.id ? `${url}/${editing.id}` : url, { method: editing.id ? 'PATCH' : 'POST', body: { item: prepare(kind, editing.values) } });
     setBusy(false);
     if (r.ok) {
@@ -126,6 +129,7 @@ export function ResourceManager({ projectId, kind, currency = 'RON', ctx, onOpen
     } else {
       setErrors((r.error.details?.fields as Record<string, string> | undefined) ?? {});
       setFormError(r.error.code === 'invalid' && r.error.details?.fields ? 'Some fields need your attention. They are marked below.' : r.error.message);
+      setFormUpgrade(r.error.code === 'limit' && r.error.details?.upgrade === true);
     }
   }
 
@@ -159,7 +163,7 @@ export function ResourceManager({ projectId, kind, currency = 'RON', ctx, onOpen
           <button type="button" onClick={() => { if (!dirty || window.confirm('Leave without saving your changes?')) setEditing(null); }} className="inline-flex min-h-11 items-center rounded-lg text-[15px] font-semibold text-violet">← All {def.plural.toLowerCase()}</button>
         </div>
         <h3 id="item-form-title" ref={headingRef} tabIndex={-1} className="text-xl font-semibold text-midnight focus:outline-none">{editing.id ? `Edit ${def.label.toLowerCase()}` : `New ${def.label.toLowerCase()}`}</h3>
-        {formError ? <Notice tone="error">{formError}</Notice> : null}
+        {formError ? <Notice tone="error">{formError}{formUpgrade ? <> <Link href="/billing" className="font-semibold underline">See plans</Link></> : null}</Notice> : null}
         <div className="max-w-3xl rounded-3xl border border-midnight/10 bg-white p-5 sm:p-6">
           <ItemFields fields={def.fields} values={editing.values} errors={errors} ctx={formCtx} onChange={(k, v) => { setDirty(true); setEditing((s) => (s ? { ...s, values: { ...s.values, [k]: v } } : s)); }} />
         </div>

@@ -3,9 +3,9 @@ import { LegalPage, LegalSection, Todo } from '../../../components/legal';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How this Saitify website handles personal data (draft structure, pending legal review).',
+  description: 'How this Saitlify website handles personal data (draft structure, pending legal review).',
   alternates: { canonical: '/privacy' },
-  openGraph: { url: '/privacy', title: 'Privacy Policy | Saitify' },
+  openGraph: { url: '/privacy', title: 'Privacy Policy | Saitlify' },
 };
 
 export default function PrivacyPage() {

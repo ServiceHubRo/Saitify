@@ -113,7 +113,7 @@ test('the full flow creates a valid configuration for a restaurant', async ({ pa
   await page.getByRole('button', { name: 'Create my website configuration' }).click();
   await expect(page.getByTestId('finished')).toBeVisible();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Download configuration/ }).click()]);
-  expect(download.suggestedFilename()).toBe('casa-test.saitify.json');
+  expect(download.suggestedFilename()).toBe('casa-test.saitlify.json');
   expect(errors).toEqual([]);
 });
 

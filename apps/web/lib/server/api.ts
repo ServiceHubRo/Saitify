@@ -1,5 +1,5 @@
 import 'server-only';
-import { DatabaseNotConfiguredError, ProjectError, SchemaNotReadyError, type Ctx, type SessionInfo } from '@saitify/platform';
+import { BillingConfigError, DatabaseNotConfiguredError, ProjectError, SchemaNotReadyError, type Ctx, type SessionInfo } from '@saitify/platform';
 import { NextResponse } from 'next/server';
 import { appUrl, getCtx } from './platform';
 import { currentSession } from './session';
@@ -86,6 +86,7 @@ export function errorResponse(e: unknown): Response {
     const status = e.code === 'not_found' ? 404 : e.code === 'conflict' ? 409 : e.code === 'too_large' ? 413 : e.code === 'limit' ? 409 : 422;
     return fail(status, { code: e.code, message: e.message, details: e.details, ...(e.details?.field ? { fields: { [String(e.details.field)]: e.message } } : {}) });
   }
+  if (e instanceof BillingConfigError) return fail(503, { code: 'billing_unavailable', message: 'Paid plans cannot be purchased yet because billing is still being set up. Your account and the Free plan are unaffected.' });
   if (e instanceof DatabaseNotConfiguredError || e instanceof SchemaNotReadyError) {
     console.error('[saitify] database unavailable:', e.name);
     return fail(503, { code: 'service_unavailable', message: 'Accounts are temporarily unavailable. Please try again later.' });

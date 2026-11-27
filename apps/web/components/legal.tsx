@@ -32,7 +32,7 @@ export function LegalPage({
             >
               <strong>Draft, not final.</strong> This page is a structure with placeholders. Business
               details are still missing and the text has not had a legal review. It must be completed
-              and reviewed before Saitify launches.
+              and reviewed before Saitlify launches.
             </div>
           </div>
         </Container>

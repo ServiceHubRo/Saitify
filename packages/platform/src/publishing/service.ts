@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { validateWebsite, type Website } from '@saitify/engine';
 import { isUniqueViolation } from '../auth/service';
 import type { Db } from '../db/types';
+import { assertWithin } from '../billing/entitlements';
 import { ProjectError, isUuid } from '../projects/service';
 import { publicUrl, siteBase, type Hosting } from './hosting';
 import { DEPLOYMENT_LABEL, IN_FLIGHT, STALE_AFTER_MS, canTransition, siteDisplayStatus, type DeploymentStatus, type SiteDisplayStatus } from './status';
@@ -338,6 +339,13 @@ export async function publish(db: Db, ownerId: string, projectId: string, input:
   if (!report.website) throw new ProjectError('invalid', 'Fix the blocking issues before publishing.', { blocking: report.blocking, warnings: report.warnings });
   const f = checkSubdomainFormat(input.subdomain);
   if (!f.ok) throw new ProjectError('invalid', f.message, { field: 'subdomain', code: f.code });
+
+  // Plan limit: a website that is already online may always be republished; putting another website online counts against the plan.
+  const current = await siteRow(db, project.id);
+  if (!current || current.state !== 'published') {
+    const busy = current ? await db.query("select 1 from deployments where site_id = $1 and status in ('validating','preparing','deploying','verifying')", [current.id]) : [];
+    if (busy.length === 0) await assertWithin(db, ownerId, 'published_sites');
+  }
 
   const site = await claim(db, ownerId, project.id, f.value);
   await reapStale(db, site.id);
