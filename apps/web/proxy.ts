@@ -1,4 +1,4 @@
-import { checkSubdomainFormat, hostingFromEnv, subdomainFromHost } from '@saitify/platform/hosting';
+import { checkSubdomainFormat, hostingFromEnv, isPrivatePath, loginUrlFor, sessionCookieName, subdomainFromHost } from '@saitify/platform/hosting';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
@@ -33,6 +33,19 @@ export function proxy(req: NextRequest) {
     // With wildcard hosting in use, the path-style address is not a second way in.
     const p = req.nextUrl.pathname;
     if (p === '/s' || p.startsWith('/s/')) return new NextResponse('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  }
+
+  // Building, editing, saving, managing, publishing and billing need an account. A request without any session cookie is sent
+  // to sign in here, at the edge, with a real 307 (not a loading page), and returns to where it was going afterwards. This is
+  // only the first gate: pages and API routes still validate the session on the server, and a forged cookie gets nothing.
+  const path = req.nextUrl.pathname;
+  if (isPrivatePath(path) && !req.cookies.get(sessionCookieName(appUrl.startsWith('https://')))?.value) {
+    const to = req.nextUrl.clone();
+    to.pathname = '/login';
+    to.search = loginUrlFor(path, req.nextUrl.search).slice('/login'.length);
+    const res = NextResponse.redirect(to, 307);
+    res.headers.set('Cache-Control', 'no-store');
+    return res;
   }
   return NextResponse.next({ request: { headers } });
 }

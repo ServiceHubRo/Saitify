@@ -30,7 +30,7 @@ const none = <span className="text-midnight/50">Not set</span>;
 
 export type FinishProps =
   | { mode: 'project'; projectId: string; status: SyncStatus; onOpen: () => void; opening: boolean }
-  | { mode: 'guest'; auth: 'unknown' | 'user' | 'guest'; done: boolean; saving: boolean; error: string | null; onFinish: () => void; onSave: () => void; onBeforeAuth: () => void };
+  | { mode: 'guest'; auth: 'unknown' | 'user' | 'guest'; done: boolean; saving: boolean; error: string | null; onFinish: () => void; onSave: () => void };
 
 export function ReviewStep({
   state, dispatch, project, headingRef, finish,
@@ -120,7 +120,7 @@ export function ReviewStep({
         ) : finish.done ? (
           <div data-testid="finished">
             <h2 className="text-2xl font-semibold">Your website configuration is ready</h2>
-            {finish.auth === 'user' ? (
+            {finish.auth !== 'guest' ? (
               <>
                 <p className="mt-3 max-w-2xl text-white/80" role="status">{finish.saving ? 'Saving your website to your account…' : 'We could not save it yet. Your answers are still here.'}</p>
                 {finish.error ? <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-900">{finish.error}</p> : null}
@@ -128,10 +128,9 @@ export function ReviewStep({
               </>
             ) : (
               <>
-                <p className="mt-3 max-w-2xl text-white/80">It passed the website engine&rsquo;s validation and is shown in the preview. Save it to a free account to keep it, come back later and continue where you left off. Until then your draft stays on this device.</p>
+                <p className="mt-3 max-w-2xl text-white/80" role="status">Your session has ended, so nothing was saved yet. Your answers are kept in this browser: sign in again and they will be here.</p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <a href={`/register?next=${encodeURIComponent('/create/save')}`} onClick={finish.onBeforeAuth} className="inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Create a free account to save it</a>
-                  <a href={`/login?next=${encodeURIComponent('/create/save')}`} onClick={finish.onBeforeAuth} className="inline-flex min-h-12 items-center rounded-full border border-white/40 px-6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">I already have an account</a>
+                  <a href="/login?next=%2Fcreate" className="inline-flex min-h-12 items-center rounded-full bg-white px-6 font-semibold text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Sign in to save it</a>
                   <button type="button" onClick={download} className="inline-flex min-h-12 items-center rounded-full px-4 font-semibold text-white underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Download configuration (JSON)</button>
                 </div>
               </>

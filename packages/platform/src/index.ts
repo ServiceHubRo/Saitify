@@ -1,6 +1,7 @@
 export * from './db';
 export * from './mail';
 export * from './auth/crypto';
+export * from './auth/routes';
 export * from './auth/validation';
 export * from './auth/rate-limit';
 export * from './auth/service';
@@ -14,3 +15,4 @@ export * from './publishing/validate';
 export * from './publishing/service';
 export * from './modules';
 export * from './billing';
+export * from './log';

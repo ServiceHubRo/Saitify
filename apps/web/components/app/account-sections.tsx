@@ -212,7 +212,7 @@ export function PrivacySection() {
 
       <Dialog open={open} onClose={() => setOpen(false)} title="Delete your account?">
         <form onSubmit={del} noValidate aria-label="Confirm account deletion" className="mt-3 space-y-4">
-          <p className="text-[15px] leading-relaxed text-midnight/75">All projects will be deleted with it. To confirm, enter your password and type <strong>DELETE</strong>.</p>
+          <p className="text-[15px] leading-relaxed text-midnight/75">All projects will be deleted with it, and a paid subscription is canceled immediately. To confirm, enter your password and type <strong>DELETE</strong>.</p>
           {formErr ? <Notice tone="error">{formErr}</Notice> : null}
           <PasswordField id="del-password" label="Password" autoComplete="current-password" value={v.password} onChange={(x) => setV((s) => ({ ...s, password: x }))} error={errors.password} />
           <TextInput id="del-confirm" label="Type DELETE" autoComplete="off" autoCapitalize="characters" value={v.confirmText} onChange={(e) => setV((s) => ({ ...s, confirmText: e.target.value }))} error={errors.confirmText} />

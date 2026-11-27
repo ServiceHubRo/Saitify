@@ -1,4 +1,5 @@
 import type { Db } from '../db/types';
+import { logEvent } from '../log';
 import { recordHistory, syncSubscriptionIn } from './service';
 import type { StripeSubscriptionView } from './stripe-api';
 
@@ -143,7 +144,7 @@ export async function processWebhookEvent(db: Db, ev: StripeEventLike): Promise<
        on conflict (stripe_event_id) do update set status = 'failed', error = excluded.error where billing_events.status not in ('processed','ignored')`,
       [ev.id, ev.type, msg],
     ).catch(() => undefined);
-    console.error('[saitify] billing webhook failed:', ev.type, e instanceof Error ? e.name : 'unknown');
+    logEvent('error', 'billing_webhook_failed', { stripeEvent: ev.type, stripeEventId: ev.id }, e);
     throw e;
   }
 }

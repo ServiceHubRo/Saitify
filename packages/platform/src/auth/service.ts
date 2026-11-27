@@ -362,12 +362,21 @@ export async function confirmEmailChange(ctx: Ctx, token: string): Promise<{ sta
   return { status: 'changed' };
 }
 
-export type DeleteResult = { type: 'deleted' } | { type: 'validation'; fields: Fields } | { type: 'rate_limited'; retryAfterSec: number };
+export type DeleteResult = { type: 'deleted' } | { type: 'validation'; fields: Fields } | { type: 'rate_limited'; retryAfterSec: number } | { type: 'blocked'; message: string };
 /** Permanently deletes the account and, through foreign keys, its sessions, tokens and every project. */
-export async function deleteAccount(ctx: Ctx, input: { userId: string; password: string; confirmText: string }): Promise<DeleteResult> {
+/**
+ * `beforeDelete` runs after the password check and before anything is removed (billing uses it to cancel a live subscription).
+ * If it throws, the account is kept and the person is told why.
+ */
+export async function deleteAccount(ctx: Ctx, input: { userId: string; password: string; confirmText: string; beforeDelete?: () => Promise<void> }): Promise<DeleteResult> {
   if (input.confirmText !== 'DELETE') return { type: 'validation', fields: { confirmText: 'Type DELETE to confirm.' } };
   const auth = await reauthenticate(ctx, input.userId, input.password);
   if (!auth.ok) return auth.rateLimited ? { type: 'rate_limited', retryAfterSec: auth.rateLimited } : { type: 'validation', fields: { password: 'That is not your current password.' } };
+  try {
+    await input.beforeDelete?.();
+  } catch (e) {
+    return { type: 'blocked', message: e instanceof Error ? e.message : 'Your account could not be deleted right now.' };
+  }
   await ctx.db.query('delete from users where id = $1', [input.userId]);
   await ctx.db.query(`delete from rate_limits where key like $1`, [`%${input.userId}%`]);
   if (ctx.mailer.configured) await ctx.mailer.send(accountDeletedMail(auth.user.email));

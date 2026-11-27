@@ -6,3 +6,4 @@ export * from './modules/catalog';
 export * from './modules/resources';
 export * from './modules/time';
 export { classifyChange, FREE_PLAN_ID, type Interval, type BillingStatus } from './billing/policy';
+export { isPrivatePath, loginUrlFor, sessionCookieName, PRIVATE_PREFIXES } from './auth/routes';
