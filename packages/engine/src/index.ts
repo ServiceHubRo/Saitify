@@ -7,7 +7,7 @@ export const ENGINE_VERSION = '0.2.0';
 export const CONFIG_SCHEMA_VERSION = SCHEMA_VERSION;
 
 /**
- * SAITIFY platform brand tokens used by the marketing site. PLACEHOLDER hex values until the brand
+ * SAITLIFY platform brand tokens used by the marketing site. PLACEHOLDER hex values until the brand
  * spec is confirmed (docs/DECISIONS.md D-003). Not related to website design tokens (src/design).
  */
 export const tokens = {

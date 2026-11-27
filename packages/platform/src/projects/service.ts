@@ -3,6 +3,7 @@ import type { WizardState } from '@saitify/configurator';
 import type { Db } from '../db/types';
 import { isUniqueViolation } from '../auth/service';
 import { derive, DEFAULT_PROJECT_NAME, MAX_WIZARD_BYTES, migrateWizard, SITE_VERSION, WIZARD_VERSION, type LoadedWizard } from './config';
+import { assertWithin } from './../billing/entitlements';
 import { displayStatus, type DisplayStatus, type StoredStatus } from './status';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -78,6 +79,8 @@ export const MAX_PROJECTS = 100;
 async function assertRoom(db: Db, ownerId: string) {
   const r = await db.query<{ n: string }>('select count(*) as n from projects where owner_id = $1', [ownerId]);
   if (Number(r[0]?.n ?? 0) >= MAX_PROJECTS) throw new ProjectError('limit', `You have reached the limit of ${MAX_PROJECTS} projects. Delete or archive-and-export some before creating more.`);
+  // The plan's own limit. Enforced here, on the server, for every way a project can come into being.
+  await assertWithin(db, ownerId, 'projects');
 }
 
 const cleanName = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -297,6 +300,10 @@ async function setArchived(db: Db, ownerId: string, id: string, archived: boolea
     // An archived project is hidden from the dashboard, so it must not keep a website online that its owner can no longer see.
     const live = await db.query('select 1 from sites s join projects p on p.id = s.project_id where p.owner_id = $1 and p.id = $2 and s.state = $3', [ownerId, id, 'published']);
     if (live.length > 0) throw new ProjectError('conflict', 'This website is online. Unpublish it before archiving the project.', { code: 'published' });
+  }
+  if (!archived) {
+    const was = await db.query('select 1 from projects where owner_id = $1 and id = $2 and archived_at is not null', [ownerId, id]);
+    if (was.length > 0) await assertWithin(db, ownerId, 'projects'); // restoring puts a project back into the count
   }
   const rows = await db.query<FullRow>(
     `update projects set archived_at = ${archived ? 'coalesce(archived_at, now())' : 'null'}, revision = revision + 1

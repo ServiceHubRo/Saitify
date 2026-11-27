@@ -27,7 +27,7 @@ function get(url: URL): Promise<Reply> {
   const local = url.hostname.endsWith('.localhost');
   return new Promise((resolve, reject) => {
     const req = http.request(
-      { host: local ? '127.0.0.1' : url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: `${url.pathname}${url.search}`, method: 'GET', headers: { host: url.host, 'user-agent': 'SaitifyReachabilityCheck/1' }, timeout: 6000 },
+      { host: local ? '127.0.0.1' : url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: `${url.pathname}${url.search}`, method: 'GET', headers: { host: url.host, 'user-agent': 'SaitlifyReachabilityCheck/1' }, timeout: 6000 },
       (res) => {
         res.resume();
         resolve({ status: res.statusCode ?? 0, build: typeof res.headers['x-saitify-build'] === 'string' ? res.headers['x-saitify-build'] : null });
@@ -40,7 +40,7 @@ function get(url: URL): Promise<Reply> {
 }
 
 async function getHttps(url: URL): Promise<Reply> {
-  const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(6000), headers: { 'user-agent': 'SaitifyReachabilityCheck/1' } });
+  const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(6000), headers: { 'user-agent': 'SaitlifyReachabilityCheck/1' } });
   await res.arrayBuffer().catch(() => undefined);
   return { status: res.status, build: res.headers.get('x-saitify-build') };
 }

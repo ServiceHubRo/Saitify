@@ -38,3 +38,13 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - **D-063 One canonical control per action.** Publish lives in the editor; the project page only shows status, unpublish and history/restore.
 - **D-064 Address claims are DB-level.** Unique index plus transaction; unpublishing keeps the claim.
 - **D-065 Renderer loaded at runtime.** `react-dom/server` is loaded via Node `require` in route handlers because Next.js forbids bundling it into server components.
+
+## Phase 7 — Billing
+
+- **Webhooks are the only authority.** The Checkout success redirect grants nothing; the subscription row is written only from signature-verified Stripe events (or from Stripe's own response to a change we requested). The plan is derived from the Stripe *price id* alone, never from client input or metadata.
+- **Entitlements are computed, not stored.** `entitlementFor(subscription, now, grace)` decides what an account may use. `past_due`/`unpaid` keep paid limits for `BILLING_GRACE_DAYS` (default 7), then Free limits apply. Limits only block *creating more*; existing projects and online sites are never deleted or taken offline.
+- **Plans are data.** Limits, features and Stripe ids live in the `plans` table and are edited by an administrator (`ADMIN_EMAILS`, verified email). Amounts shown to customers are read from Stripe, never typed.
+- **Idempotent and order-safe.** `billing_events` PK de-duplicates events; `last_event_created` rejects older events for the same subscription.
+- **Upgrades are immediate (prorated); downgrades go through the Billing Portal**, so Stripe owns the proration rules. Free = cancel at period end.
+- **Technical identifiers keep the old name** (`@saitify/*` packages, cookie, localStorage keys, `SAITIFY_DB`, headers) to avoid logging everyone out and losing local drafts. Only customer-facing text was renamed.
+- **Test double for Stripe lives outside the app** (`e2e/stripe-mock.mjs`). The app talks to it through the real Stripe SDK; the override (`STRIPE_API_HOST`) is ignored for live keys.

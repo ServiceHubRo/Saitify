@@ -1,4 +1,4 @@
--- Saitify migration 0003_publishing. Paste into the Supabase SQL Editor and run ONCE.
+-- Saitlify migration 0003_publishing. Paste into the Supabase SQL Editor and run ONCE.
 -- Adds publishing tables only (sites, deployments). It does not alter or delete existing data.
 -- Safe to re-run: it stops if already applied.
 begin;

@@ -17,4 +17,7 @@ Done on branch `phase-4-accounts-projects`: auth, account settings, dashboard, p
 Done on branch `phase-5-visual-editor`: `/editor/[id]`, `packages/editor`, autosave with conflict handling, responsive editor. See docs/PHASE5.md.
 
 ## Phase 6 — Publishing & Hosting
-Done on branch `phase-6-publishing` (stacked on phase 5): sites/deployments, subdomains, public rendering, versions, rollback, unpublish, SEO. See docs/PHASE6.md. Phase 7 not started (awaiting approval).
+Done on branch `phase-6-publishing` (stacked on phase 5): sites/deployments, subdomains, public rendering, versions, rollback, unpublish, SEO. See docs/PHASE6.md.
+
+## Phase 7 — Billing & Subscriptions
+Done on branch `phase-7-billing` (stacked on phase 6): rebrand to Saitlify, Stripe Checkout/Portal/webhooks, plans and server-enforced limits, admin plan management. See docs/PHASE7.md. Phase 8 not started (awaiting approval).

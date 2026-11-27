@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  webServer: {
+  webServer: [{ command: 'node e2e/stripe-mock.mjs', url: 'http://127.0.0.1:3199/__calls', reuseExistingServer: !process.env.CI }, {
     // Fresh embedded Postgres and mail outbox for every run (see docs/PHASE4.md). Never used outside tests.
     command: 'rm -rf .e2e-data && mkdir -p .e2e-data && pnpm --filter web start --port 3100',
     url: 'http://localhost:3100',
@@ -18,8 +18,15 @@ export default defineConfig({
       SITE_BASE_DOMAIN: 'localhost:3100',
       SITE_SCHEME: 'http',
       RATE_LIMIT_IP_HEADER: 'x-test-ip',
+      // Billing: administrator by verified email; Stripe's HTTP API replaced by a local stand-in (see e2e/stripe-mock.mjs).
+      ADMIN_EMAILS: 'billing-admin@example.com',
+      STRIPE_SECRET_KEY: 'sk_test_e2e_mock_key',
+      STRIPE_API_HOST: '127.0.0.1',
+      STRIPE_API_PORT: '3199',
+      STRIPE_API_PROTOCOL: 'http',
+      STRIPE_WEBHOOK_SECRET: 'whsec_e2e_secret',
     },
-  },
+  }],
   use: {
     baseURL: 'http://localhost:3100',
     // Optional override for environments with a pre-installed Chromium.

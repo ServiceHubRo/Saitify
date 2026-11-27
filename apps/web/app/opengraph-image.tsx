@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Saitify: Your idea. Your website.';
+export const alt = 'Saitlify: Your idea. Your website.';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -19,7 +19,7 @@ export default function OpengraphImage() {
           color: '#ffffff',
         }}
       >
-        <div style={{ fontSize: 40, fontWeight: 700, opacity: 0.9 }}>Saitify</div>
+        <div style={{ fontSize: 40, fontWeight: 700, opacity: 0.9 }}>Saitlify</div>
         <div style={{ fontSize: 96, fontWeight: 700, lineHeight: 1.05, marginTop: 24 }}>
           Your idea. Your website.
         </div>

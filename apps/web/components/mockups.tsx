@@ -460,7 +460,7 @@ export function EditorMock({ className = '' }: { className?: string }) {
   return (
     <div
       role="img"
-      aria-label="Concept illustration of the planned Saitify editor: a page list on the left, a website preview in the middle and design settings on the right."
+      aria-label="Concept illustration of the planned Saitlify editor: a page list on the left, a website preview in the middle and design settings on the right."
       className={className}
     >
       <DesktopFrame>

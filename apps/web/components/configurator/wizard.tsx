@@ -178,9 +178,9 @@ export function Wizard({ project }: { project?: ProjectSeed }) {
     <div className="min-h-screen bg-cloud">
       <header className="border-b border-midnight/10 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3 sm:px-8">
-          <Link href="/" aria-label="Saitify home" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet">
+          <Link href="/" aria-label="Saitlify home" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet">
             <LogoMark />
-            <span className="text-xl font-semibold tracking-tight text-midnight">Saitify</span>
+            <span className="text-xl font-semibold tracking-tight text-midnight">Saitlify</span>
           </Link>
           <div className="flex items-center gap-2">
             {project ? (

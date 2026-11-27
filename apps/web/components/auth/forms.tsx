@@ -318,7 +318,7 @@ export function TokenAction({ endpoint, kind }: { endpoint: string; kind: 'verif
         {go}
       </div>
     );
-  if (state === 'network') return <Notice tone="error">We could not reach Saitify. Reload this page to try again.</Notice>;
+  if (state === 'network') return <Notice tone="error">We could not reach Saitlify. Reload this page to try again.</Notice>;
   return (
     <div className="space-y-5" data-testid="token-failure">
       <Notice tone="error">{state === 'taken' ? message : state === 'expired' ? 'This link has expired.' : 'This link is not valid, or it was already used.'}</Notice>
