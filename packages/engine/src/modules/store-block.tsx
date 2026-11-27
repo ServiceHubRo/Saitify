@@ -266,7 +266,7 @@ export const cartBlock = defineBlock({
     const d0 = ctx.data as CartData | undefined;
     const heading = d0?.mode === 'checkout' ? 'Checkout' : d0?.mode === 'order' ? undefined : ctx.content.heading;
     return (
-      <ModuleSection<CartData> ctx={ctx} block="cart" heading={heading}>
+      <ModuleSection<CartData> ctx={ctx} block="cart" heading={heading} level={d0?.mode === 'checkout' ? 1 : 2}>
         {(d) => {
           if (d.mode === 'missing') return <Empty>We could not find this order. Check the link in your confirmation.</Empty>;
           if (d.mode === 'order') {

@@ -98,7 +98,7 @@ export const KIND_DEFS: Record<Kind, KindDef> = {
       },
       { key: 'submitLabel', label: 'Button text', type: 'text', max: 40, required: true },
       { key: 'successMessage', label: 'Message after sending', type: 'textarea', max: 300, required: true },
-      { key: 'notifyEmail', label: 'Send each answer to', type: 'email', help: 'Optional. Overrides the module setting for this form.', advanced: true },
+      { key: 'notifyEmail', label: 'Send each answer to', type: 'email', help: 'Overrides the module setting for this form.', advanced: true },
       slug,
       status(ACTIVE),
     ],
@@ -132,7 +132,7 @@ export const KIND_DEFS: Record<Kind, KindDef> = {
     fields: [
       title('Product name', 160),
       { key: 'price', label: 'Price', type: 'money', required: true, column: 'price_cents' },
-      { key: 'compareAt', label: 'Original price', type: 'money', help: 'Optional. Shown crossed out when higher than the price (a sale).' },
+      { key: 'compareAt', label: 'Original price', type: 'money', help: 'Shown crossed out when higher than the price (a sale).' },
       { key: 'description', label: 'Description', type: 'textarea', max: 5000 },
       { key: 'images', label: 'Images', type: 'images', max: 10 },
       { key: 'categories', label: 'Categories', type: 'multiref', ref: 'product_category' },

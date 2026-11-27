@@ -18,3 +18,6 @@ Done on branch `phase-5-visual-editor`: `/editor/[id]`, `packages/editor`, autos
 
 ## Phase 6 — Publishing & Hosting
 Done on branch `phase-6-publishing` (stacked on phase 5): sites/deployments, subdomains, public rendering, versions, rollback, unpublish, SEO. See docs/PHASE6.md. Phase 7 not started (awaiting approval).
+
+## Phase 8 — Advanced Modules
+Done on branch `claude/saitlify-phase-8-modules-9oed7p` (on `main`, Phase 7 not merged): module registry and lifecycle, Forms, Blog, Online store, Bookings, Events, Directory, Memberships, Online courses; configurator, editor, publishing and entitlement integration. See docs/PHASE8.md. Phase 9 not started.

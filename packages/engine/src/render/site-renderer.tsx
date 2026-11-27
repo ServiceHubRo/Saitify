@@ -190,7 +190,8 @@ export function SiteRenderer({
     >
       {header}
       <main id="sf-main" className="sf-main">
-        {page && !locked && !page.sections.some((s) => s.visible && s.type === 'hero') ? (
+        {/* Item pages (a post, a product …) render their own h1, so the page name is not added as a second one. */}
+        {page && !locked && !(route?.sub?.length) && !page.sections.some((s) => s.visible && s.type === 'hero') ? (
           <h1 className="sf-visually-hidden">{page.title ?? page.name}</h1>
         ) : null}
         {body}

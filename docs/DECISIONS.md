@@ -38,3 +38,11 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 - **D-063 One canonical control per action.** Publish lives in the editor; the project page only shows status, unpublish and history/restore.
 - **D-064 Address claims are DB-level.** Unique index plus transaction; unpublishing keeps the claim.
 - **D-065 Renderer loaded at runtime.** `react-dom/server` is loaded via Node `require` in route handlers because Next.js forbids bundling it into server components.
+
+## Phase 8
+- **D-080 Modules are content + transactions, not snapshot data.** Page structure stays in deployment snapshots; module content lives in `module_items` (typed columns for what is filtered, locked or indexed, `data` jsonb for the rest, like `projects`) and transactional tables. Publishing a post or product is immediate; rollback restores structure only.
+- **D-081 Website members are not Saitlify users.** Visitors of a customer's website get per-project accounts (`site_members`), reusing the platform's scrypt hashing, token hashing and DB rate limits, with their own path-scoped cookie. Mixing them into `users` would make them platform account holders.
+- **D-082 Published websites stay script-free.** Visitor actions are HTML form posts to `/_m/<module>/<action>` on the site's own address with Post/Redirect/Get; validation errors re-render the page server-side. CSP gains only `form-action 'self'` and two video player origins.
+- **D-083 One entitlement seam.** Module access and limits come from `getModuleEntitlements`; without Phase 7 it returns platform caps and says so. Phase 7 plugs in with `setModuleEntitlementResolver` + `entitlementsFromPlanLimits`.
+- **D-084 One declarative field list per content kind** drives both server validation and the management form, so they cannot disagree.
+- **D-085 No fake payments.** Store checkout offers cash on delivery, bank transfer and pickup; payment status changes only by the owner's action.

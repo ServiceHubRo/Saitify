@@ -50,19 +50,20 @@ function HoursInput({ value, onChange }: { value: unknown; onChange: (v: Record<
   const set = (day: string, ranges: { start: string; end: string }[]) => onChange({ ...Object.fromEntries(WEEKDAYS.map((d) => [d, v[d] ?? []])), [day]: ranges });
   return (
     <div className="divide-y divide-midnight/10 rounded-2xl border border-midnight/12">
+      <p className="px-3 pt-3 text-sm text-midnight/65">Times use the 24-hour clock, for example 09:00 and 17:30.</p>
       {WEEKDAYS.map((d) => {
         const ranges = v[d] ?? [];
         return (
           <div key={d} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
-            <p className="w-28 shrink-0 pt-2.5 text-sm font-semibold">{names[d]}</p>
+            <p className="shrink-0 pt-2.5 text-sm font-semibold sm:w-28">{names[d]}</p>
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               {ranges.length === 0 ? <p className="pt-2.5 text-sm text-midnight/60">Closed</p> : null}
               {ranges.map((r, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-2">
-                  <input type="time" aria-label={`${names[d]} from`} className={smallInput} value={r.start} onChange={(e) => set(d, ranges.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))} />
+                <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2">
+                  <input type="text" inputMode="numeric" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" maxLength={5} placeholder="09:00" aria-label={`${names[d]} from (24-hour, HH:MM)`} className={`${smallInput} w-full min-w-0 px-2 text-center tabular-nums`} value={r.start} onChange={(e) => set(d, ranges.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))} />
                   <span aria-hidden="true">–</span>
-                  <input type="time" aria-label={`${names[d]} until`} className={smallInput} value={r.end} onChange={(e) => set(d, ranges.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))} />
-                  <button type="button" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-red-700" onClick={() => set(d, ranges.filter((_, j) => j !== i))}>Remove</button>
+                  <input type="text" inputMode="numeric" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" maxLength={5} placeholder="09:00" aria-label={`${names[d]} until (24-hour, HH:MM)`} className={`${smallInput} w-full min-w-0 px-2 text-center tabular-nums`} value={r.end} onChange={(e) => set(d, ranges.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))} />
+                  <button type="button" aria-label={`Remove ${names[d]} ${r.start}–${r.end}`} className="size-11 rounded-lg text-red-700 hover:bg-red-50" onClick={() => set(d, ranges.filter((_, j) => j !== i))}>✕</button>
                 </div>
               ))}
             </div>
@@ -195,7 +196,7 @@ function FieldInput({ f, values, onChange, errors, keyPath, ctx }: { f: FieldSpe
     case 'select':
       control = (
         <select id={id} className={inputClass} aria-invalid={invalid} value={typeof value === 'string' ? value : ''} onChange={(e) => onChange(e.target.value || undefined)}>
-          {!f.required || !value ? <option value="">{f.key === 'status' ? 'Default' : 'Choose…'}</option> : null}
+          {(!f.required && f.key !== 'status') || !value ? <option value="">Choose…</option> : null}
           {(f.options ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       );

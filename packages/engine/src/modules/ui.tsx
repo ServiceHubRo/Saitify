@@ -24,9 +24,14 @@ export function fmtDate(iso: string, lang: string, opts: { timeZone?: string; ti
   }
 }
 
-/** `YYYY-MM-DD` as a readable day, without any time-zone shift. */
-export function fmtDay(day: string, lang: string): string {
-  return fmtDate(`${day}T12:00:00Z`, lang, { weekday: true });
+/** `YYYY-MM-DD` as a readable day, without any time-zone shift. `short` gives "Sat, 28 Nov" for compact choices. */
+export function fmtDay(day: string, lang: string, short = false): string {
+  if (!short) return fmtDate(`${day}T12:00:00Z`, lang, { weekday: true });
+  try {
+    return new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+  } catch {
+    return day;
+  }
 }
 
 export function withQuery(base: string, params: Record<string, string | number | undefined | null>): string {
@@ -150,7 +155,7 @@ export function SearchBar({ action, q, keep = {}, label = 'Search', scope = 'x' 
       </label>
       <input id={`sf-q-${scope}`} type="search" name="q" defaultValue={q ?? ''} placeholder={`${label}…`} maxLength={100} />
       <button type="submit" className="sf-btn sf-btn--secondary">
-        {label}
+        Search
       </button>
     </form>
   );
@@ -191,11 +196,14 @@ export function ModuleSection<T>({
   description,
   children,
   waiting = 'Content from this module appears here.',
+  level = 2,
 }: {
   ctx: BlockContext;
   block: string;
   heading?: string;
   description?: string;
+  /** 1 on item pages that have no other main heading (for example the checkout). */
+  level?: 1 | 2;
   children: (data: T) => ReactNode;
   waiting?: string;
 }) {
@@ -203,7 +211,7 @@ export function ModuleSection<T>({
   return (
     <SectionShell ctx={ctx} block={block}>
       <div className="sf-module">
-        <Intro heading={heading} description={description} />
+        <Intro heading={heading} description={description} level={level} />
         {isUnavailable(data) ? (
           <p className="sf-empty">{data.message}</p>
         ) : data === undefined || data === null ? (

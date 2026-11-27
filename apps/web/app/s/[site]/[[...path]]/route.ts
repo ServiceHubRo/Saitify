@@ -169,6 +169,9 @@ export async function GET(req: Request, { params }: Params) {
   }
 }
 
+/** A path on this host: starts with one slash, no backslashes or control characters. */
+const localPath = (p: string) => p.startsWith('/') && !p.startsWith('//') && !p.includes('\\') && ![...p].some((ch) => ch.charCodeAt(0) < 0x20);
+
 /** Same-site check for visitor form posts (in addition to SameSite cookies and the signed form token). */
 function sameSite(req: Request, base: string): boolean {
   if (req.headers.get('sec-fetch-site') === 'cross-site') return false;
@@ -198,7 +201,7 @@ export async function POST(req: Request, { params }: Params) {
     // Where the form was: must be a path of this website. Anything else falls back to the home page.
     const raw = (form.get('_return') ?? '').slice(0, 600);
     const ret = new URL(raw.startsWith('/') && !raw.startsWith('//') ? raw : '/', 'https://site.invalid');
-    const inside = !c.prefix || ret.pathname === c.prefix || ret.pathname.startsWith(`${c.prefix}/`);
+    const inside = localPath(ret.pathname) && (!c.prefix || ret.pathname === c.prefix || ret.pathname.startsWith(`${c.prefix}/`));
     const path = inside ? ret.pathname : `${c.prefix}/`;
     const segments = path.slice(c.prefix.length).split('/').filter(Boolean);
     const query = queryOf(ret);
@@ -208,7 +211,8 @@ export async function POST(req: Request, { params }: Params) {
     const secure = c.base.startsWith('https://');
     const cookies = (result.cookies ?? []).map((x) => cookieHeader(x, c.prefix, secure));
     if (result.kind === 'redirect') {
-      const to = result.to.startsWith(`${c.prefix}/`) || result.to === c.prefix ? result.to : `${c.prefix}/`;
+      // Only ever redirect within this website (never to another host, e.g. a protocol-relative `//evil.example`).
+      const to = localPath(result.to) && (result.to.startsWith(`${c.prefix}/`) || result.to === c.prefix) ? result.to : `${c.prefix}/`;
       const headers = new Headers({ Location: to, ...PRIVATE, ...SECURITY });
       for (const ck of cookies) headers.append('Set-Cookie', ck);
       return new Response(null, { status: 303, headers });

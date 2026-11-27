@@ -104,11 +104,11 @@ export const bookingBlock = defineBlock({
                       {d.days.map((day) => (
                         <li key={day.date}>
                           {day.available ? (
-                            <a href={link({ date: day.date, time: undefined })} aria-current={day.date === sel.date ? 'date' : undefined}>
-                              {fmtDay(day.date, lang)}
+                            <a href={link({ date: day.date, time: undefined })} aria-current={day.date === sel.date ? 'date' : undefined} aria-label={fmtDay(day.date, lang)}>
+                              {fmtDay(day.date, lang, true)}
                             </a>
                           ) : (
-                            <span aria-disabled="true">{fmtDay(day.date, lang)}</span>
+                            <span aria-disabled="true" aria-label={`${fmtDay(day.date, lang)}: fully booked or closed`}>{fmtDay(day.date, lang, true)}</span>
                           )}
                         </li>
                       ))}

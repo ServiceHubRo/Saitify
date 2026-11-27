@@ -86,8 +86,12 @@ test('the full flow creates a valid configuration for a restaurant', async ({ pa
 
   await expect(h1(page)).toHaveText('What should your website include?');
   await expect(page.getByLabel(/Click-to-call/)).toBeChecked();
-  await expect(page.getByLabel(/^Reservations/)).toBeChecked();
-  await expect(page.getByText('Not available yet').first()).toBeVisible();
+  // "reserve a table" suggests the Bookings module (Phase 8); a suggestion is never ticked for the person.
+  const bookings = page.getByRole('list', { name: 'Modules' }).locator('label', { hasText: 'Bookings' });
+  await expect(bookings).toContainText('Suggested');
+  await expect(bookings.getByRole('checkbox')).not.toBeChecked();
+  await bookings.click();
+  await expect(bookings.getByRole('checkbox')).toBeChecked();
   await expect(page.getByText('Ticking one does not add anything')).toBeVisible();
   await next(page);
 
@@ -105,6 +109,7 @@ test('the full flow creates a valid configuration for a restaurant', async ({ pa
   await expect(page.getByText('Casa Test').first()).toBeVisible();
   await expect(page.getByText('Table & menu').first()).toBeVisible();
   await expect(page.getByText(/Wish list/)).toBeVisible();
+  await expect(page.getByText('Bookings', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Create my website configuration' }).click();
   await expect(page.getByTestId('finished')).toBeVisible();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Download configuration/ }).click()]);
@@ -216,10 +221,15 @@ test('the unavailable capabilities are never presented as working', async ({ pag
   await expect(included.getByText('Included')).not.toHaveCount(0);
   await expect(included.getByText('Not available yet')).toHaveCount(0);
   await page.getByText('More future features').click();
-  for (const name of ['Online store', 'Online payments', 'Appointment booking', 'Customer accounts', 'Newsletter signup']) {
-    const row = page.locator('label', { hasText: name }).first();
+  const later = page.getByRole('region', { name: /Coming later/ });
+  for (const name of ['Online payments', 'Newsletter signup', 'Search']) {
+    const row = later.locator('label', { hasText: name }).first();
     await expect(row).toContainText('Not available yet');
   }
+  // What modules deliver (Phase 8) is offered as a real, optional module, never in the wish list.
+  const modules = page.getByRole('list', { name: 'Modules' });
+  for (const id of ['store', 'booking', 'members']) await expect(modules.locator(`label[for="mod-${id}"]`)).not.toContainText('Not available yet');
+  await expect(later.locator('label', { hasText: 'Online store' })).toHaveCount(0);
 });
 
 for (const step of STEPS) {

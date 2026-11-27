@@ -33,7 +33,7 @@ const COLUMN_LABEL: Record<string, string> = { title: 'Name', slug: 'Address', s
 
 /** Defaults for a new item: required selects get their first option, booleans start off, lists start empty. */
 function blank(kind: Kind): Values {
-  const out: Values = {};
+  const out: Values = { status: KIND_DEFS[kind].defaultStatus };
   for (const f of KIND_DEFS[kind].fields) {
     if (f.type === 'select' && f.required && f.options?.length) out[f.key] = f.options[0]!.value;
     if (f.type === 'boolean') out[f.key] = false;
