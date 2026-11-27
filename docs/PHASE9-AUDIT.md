@@ -98,3 +98,10 @@ Live Netlify configuration and env vars; Supabase configuration, RLS, backups an
 7. **H4** Technical, factual privacy/terms content (what is collected, cookies, processors, deletion/export) with the remaining legal fields clearly marked for human legal review.
 8. **M4/M5** Accessibility fixes (dl, contrast, landmarks, h1), editor layout-shift reduction.
 9. Tests for each change, docs (beta checklist, deployment, backup/recovery, legal review list, manual actions), full verification, PR (not merged).
+
+## Homepage and interactive demo audit (additional requirement B)
+**Before:** nine sections (hero with device mock-up, four-step cards, three fictional template previews, two feature stories repeating mock-ups, a static "concept" editor picture, six benefits, "Pricing coming soon", FAQ, closing band), 7617 px tall at 1440 px, and every visual was an illustration of something described as not yet available. A first-time visitor could not see the real product anywhere.
+**Would a demo help?** Yes: the product's value is a sequence (choose → answer → generated → edit → preview → publish) that is faster to watch than to read, and the real product now exists to be shown. It replaces the mock-up sections instead of adding to them.
+**Accuracy check of each demo step against the code:** template choice or "No template" (wizard template step); questions and page choices (wizard); generated website validated by the engine (generator + `validateWebsite`); visual editor with text editing, palette change, section list (editor); desktop/tablet/mobile preview (editor devices); publish with an address and version number (publishing service); restore of earlier versions (publishing service). Not shown because not real: image upload, custom domain, card payments, AI-written content. The demo's "Start from scratch" corresponds to the wizard's "No template".
+**Structure decision:** one demo, directly under the hero; the hero's second button scrolls to it; one "what is included" block; one closing call to action; no second template showcase (that lives on `/templates`). Result and measurements: `docs/PHASE9.md` §3 and §5.
+
