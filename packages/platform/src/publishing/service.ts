@@ -7,6 +7,18 @@ import { publicUrl, siteBase, type Hosting } from './hosting';
 import { DEPLOYMENT_LABEL, IN_FLIGHT, STALE_AFTER_MS, canTransition, siteDisplayStatus, type DeploymentStatus, type SiteDisplayStatus } from './status';
 import { checkSubdomainFormat, suggestSubdomain, subdomainVariants } from './subdomain';
 import { checkPublishable, type Finding, type PublishReport } from './validate';
+import { activeModules } from '../modules/service';
+import { checkModuleSections } from '../modules/site-check';
+
+/** Engine checks plus module checks (sections whose module is switched off cannot be published). */
+async function checkWithModules(db: Db, projectId: string, site: unknown): Promise<PublishReport & { modules: string[] }> {
+  const r = checkPublishable(site);
+  const active = await activeModules(db, projectId);
+  if (!r.website) return { ...r, modules: [...active.keys()] };
+  const m = checkModuleSections(r.website, new Set(active.keys()));
+  const blocking = [...r.blocking, ...m.blocking];
+  return { ...r, blocking, warnings: [...r.warnings, ...m.warnings], passed: [...r.passed, ...m.passed], website: blocking.length ? null : r.website, modules: [...active.keys()] };
+}
 
 /* ------------------------------------------------------------------ types */
 
@@ -175,7 +187,8 @@ export type Preflight = {
 export async function preflight(db: Db, ownerId: string, projectId: string, hosting: Hosting): Promise<Preflight> {
   const project = await ownedProject(db, ownerId, projectId);
   const state = await getSiteState(db, ownerId, projectId, hosting);
-  const r = checkPublishable(project.site);
+  const { modules: _m, ...r } = await checkWithModules(db, project.id, project.site);
+  void _m;
   if (project.archived_at) r.blocking.unshift({ code: 'archived', message: 'This project is archived. Restore it before publishing.' });
   let suggested = state.subdomain ?? suggestSubdomain(project.name);
   if (!state.subdomain) {
@@ -321,7 +334,7 @@ export type PublishResult = { deployment: DeploymentSummary; state: SiteState; w
 export async function publish(db: Db, ownerId: string, projectId: string, input: { subdomain: unknown }, deps: PublishDeps): Promise<PublishResult> {
   const project = await ownedProject(db, ownerId, projectId);
   if (project.archived_at) throw new ProjectError('invalid', 'This project is archived. Restore it before publishing.');
-  const report = checkPublishable(project.site);
+  const report = await checkWithModules(db, project.id, project.site);
   if (!report.website) throw new ProjectError('invalid', 'Fix the blocking issues before publishing.', { blocking: report.blocking, warnings: report.warnings });
   const f = checkSubdomainFormat(input.subdomain);
   if (!f.ok) throw new ProjectError('invalid', f.message, { field: 'subdomain', code: f.code });
@@ -329,6 +342,8 @@ export async function publish(db: Db, ownerId: string, projectId: string, input:
   const site = await claim(db, ownerId, project.id, f.value);
   await reapStale(db, site.id);
   const id = await openDeployment(db, site, ownerId, { kind: 'publish', sourceRevision: project.revision, sourceHash: fingerprint(report.website) });
+  // Which modules the published sections rely on, recorded with the deployment for support and audits. Module content itself is live data.
+  await db.query(`update deployments set result = result || $2::jsonb where id = $1`, [id, JSON.stringify({ modules: report.modules })]);
   const deployment = await runPipeline(db, deps, site, id, report.website, JSON.stringify(report.website), report.warnings);
   return { deployment, state: await getSiteState(db, ownerId, projectId, deps.hosting), warnings: report.warnings };
 }
@@ -348,6 +363,8 @@ export async function rollback(db: Db, ownerId: string, projectId: string, deplo
   if (!target) throw new ProjectError('not_found', 'Version not found.');
   if (target.id === site.active_deployment_id) throw new ProjectError('invalid', 'This version is already live.');
   if (target.status !== 'succeeded' || !target.snapshot || target.snapshot_hash !== fingerprint(target.snapshot)) throw new ProjectError('invalid', 'Only a version that was published successfully can be restored.');
+  const moduleCheck = await checkWithModules(db, project.id, target.snapshot);
+  if (!moduleCheck.website) throw new ProjectError('invalid', 'This version uses sections from a module that is switched off now. Switch the module on first, or publish your current website instead.', { blocking: moduleCheck.blocking });
   await reapStale(db, site.id);
   const id = await openDeployment(db, site, ownerId, { kind: 'rollback', sourceRevision: target.source_revision, sourceHash: target.source_hash, rollbackOf: target.id });
   const deployment = await runPipeline(db, deps, site, id, target.snapshot, JSON.stringify(target.snapshot), Array.isArray(target.warnings) ? target.warnings : []);

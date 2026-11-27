@@ -1,4 +1,4 @@
-import { getProject, getSiteState, openForEditor } from '@saitify/platform';
+import { activeModules, getProject, getSiteState, openForEditor } from '@saitify/platform';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EditorGate } from '../../../components/editor/editor-gate';
@@ -43,5 +43,6 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
     );
   }
   const publish = await getSiteState(db, session.user.id, project.id, hosting());
-  return <EditorGate project={{ id: project.id, name: project.name, revision: project.revision, site: opened.website, edited: opened.edited, publish }} issues={opened.issues.map((i) => `${i.path || 'website'}: ${i.message}`)} />;
+  const modules = [...(await activeModules(db, project.id)).keys()];
+  return <EditorGate project={{ id: project.id, name: project.name, revision: project.revision, site: opened.website, edited: opened.edited, publish, modules }} issues={opened.issues.map((i) => `${i.path || 'website'}: ${i.message}`)} />;
 }

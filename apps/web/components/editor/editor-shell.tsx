@@ -12,6 +12,7 @@ import { Canvas, DEVICES, type DeviceId } from './canvas';
 import { IconButton } from './fields';
 import { Icon, type IconName } from './icons';
 import { Menu } from './menu';
+import { ModuleContext, useModulePreview } from './module-context';
 import { PublishDialog, type FixTarget, type SiteStateLite } from './publish-dialog';
 import { DesignPanel, MenuPanel, PagesPanel, StructurePanel } from './panels-left';
 import { AddPageDialog, AddSectionDialog, PageInspector, SectionInspector, ShortcutsDialog, SiteSettingsDialog } from './panels-right';
@@ -20,7 +21,7 @@ import type { Report, Selection } from './types';
 import { useEditorState, type EditResult } from './use-editor';
 import { clearBackup, readBackup, useSiteSync, type Backup } from './use-site-sync';
 
-export type EditorProject = { id: string; name: string; revision: number; site: Website; edited: boolean; publish: SiteStateLite };
+export type EditorProject = { id: string; name: string; revision: number; site: Website; edited: boolean; publish: SiteStateLite; modules: string[] };
 type LeftTab = 'sections' | 'pages' | 'design' | 'menu';
 const TABS: { id: LeftTab; label: string; icon: IconName }[] = [
   { id: 'sections', label: 'Sections', icon: 'layers' },
@@ -49,6 +50,7 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
   const { site } = api;
   const sync = useSiteSync({ projectId: project.id, initialRevision: project.revision, site, enabled: true });
   const narrow = useNarrow();
+  const moduleInfo = useMemo(() => ({ projectId: project.id, active: project.modules }), [project.id, project.modules]);
 
   const [pageId, setPageId] = useState(() => homePage(project.site).id);
   const [selection, setSelection] = useState<Selection>(null);
@@ -82,6 +84,7 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
 
   // A page that no longer exists (after undo or delete) falls back to the home page.
   const page = findPageById(site, pageId) ?? homePage(site);
+  const moduleData = useModulePreview(project.id, site, page.id, project.modules);
   useEffect(() => {
     if (page.id !== pageId) setPageId(page.id);
   }, [page.id, pageId]);
@@ -246,6 +249,7 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
   const saveTone = status === 'saved' ? 'text-emerald-800' : status === 'saving' || status === 'dirty' ? 'text-midnight/70' : 'text-red-700';
 
   return (
+    <ModuleContext.Provider value={moduleInfo}>
     <div className="fixed inset-0 flex flex-col bg-cloud text-midnight">
       <h1 className="sr-only">Editing {site.name}</h1>
       <header role="toolbar" aria-label="Editor toolbar" className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-midnight/10 bg-white px-2 py-1.5 sm:px-3">
@@ -343,6 +347,7 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
             onSelect={(s) => select(s, true)}
             onNavigate={(id) => findPageById(site, id) && (setPageId(id), setSelection(null))}
             onInlineEdit={(id, path, text) => api.editContent(id, path, text, 'Edit text')}
+            moduleData={moduleData}
             empty={
               <div className="max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl">
                 <p className="text-lg font-semibold">This page is empty</p>
@@ -417,5 +422,6 @@ export function EditorShell({ project, storageReady = false }: { project: Editor
         </div>
       </Dialog>
     </div>
+    </ModuleContext.Provider>
   );
 }

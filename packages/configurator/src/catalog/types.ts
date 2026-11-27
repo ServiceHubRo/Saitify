@@ -35,6 +35,10 @@ export type FieldDef = {
   bind: 'badge' | 'hours' | 'about' | 'none';
 };
 
+/** Module ids known to the configurator. Kept in sync with @saitify/platform MODULE_IDS by a test. */
+export const MODULE_KEYS = ['forms', 'blog', 'store', 'booking', 'events', 'directory', 'members', 'courses'] as const;
+export type ModuleKey = (typeof MODULE_KEYS)[number];
+
 export type CapabilityId =
   | 'click-to-call' | 'email-links' | 'social-links' | 'gallery' | 'location' | 'faq' | 'testimonials'
   | 'contact-form' | 'newsletter'
@@ -46,8 +50,13 @@ export type Capability = {
   name: string;
   description: string;
   group: 'basic' | 'advanced';
-  /** `supported`: the engine delivers it today. `planned`: not built yet, only recorded as interest. */
-  status: 'supported' | 'planned';
+  /**
+   * `supported`: the engine delivers it today. `module`: delivered by a Saitlify module (store, bookings …) that the person
+   * can switch on; choosing it adds the module's pages and switches the module on. `planned`: not built yet, interest only.
+   */
+  status: 'supported' | 'planned' | 'module';
+  /** For `module` capabilities: the module id (see @saitify/platform MODULES). */
+  module?: ModuleKey;
   /** Information the website needs for this capability to show something. */
   requires?: 'phone' | 'email' | 'address';
   /** Honest note shown next to the capability. */
@@ -66,7 +75,7 @@ export type Category = {
   items: { label: string; help: string; placeholder: string };
   fields: FieldDef[];
   recommendedCapabilities: CapabilityId[];
-  /** Planned capabilities that fit this category, shown first. */
+  /** Module and planned capabilities that fit this category: modules are suggested, planned ones shown first as a wish list. */
   relatedFuture: CapabilityId[];
   design: { style: StyleId; palette: PaletteId };
   ideaExample: string;

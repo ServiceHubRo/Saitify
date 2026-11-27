@@ -32,6 +32,23 @@ export type RenderSite = {
   resolveHref: (page: Page) => string;
 };
 
+/**
+ * Where a block is being rendered. Module blocks use it to build their own links (item pages, filters, pagination) and to
+ * post visitor forms. Every value comes from the host, never from the visitor.
+ */
+export type BlockRoute = {
+  /** Link to the page this section is on. */
+  pageHref: string;
+  /** Base for item links below this page: `<detailBase>/<item>`. */
+  detailBase: string;
+  /** Extra path segments after the page slug (e.g. a post slug). Only detail-capable blocks receive them. */
+  sub: string[];
+  /** Query string values (search, filters, page number). Already length-limited by the host. */
+  query: Record<string, string>;
+  /** Base URL that visitor forms post to: `<actionBase>/<module>/<action>`. */
+  actionBase: string;
+};
+
 export type BlockContext<TContent = unknown> = {
   id: string;
   content: TContent;
@@ -41,6 +58,9 @@ export type BlockContext<TContent = unknown> = {
   design: DesignTokens;
   site: RenderSite;
   mode: 'public' | 'preview';
+  /** Data loaded by the host for this section (module blocks only). Undefined while nothing was loaded. */
+  data?: unknown;
+  route: BlockRoute;
 };
 
 /**
@@ -61,6 +81,10 @@ export type BlockDefinition = {
   defaultContent: unknown;
   contentSchema: z.ZodType<unknown>;
   render: (ctx: BlockContext) => ReactNode;
+  /** Module that provides this block's data. Module blocks can only be added and published while the module is active. */
+  module?: string;
+  /** The block answers addresses below its page (`/<page>/<item>`), e.g. a blog post or a product. One per page. */
+  detail?: boolean;
 };
 
 type DefineInput<S extends z.ZodType> = Omit<

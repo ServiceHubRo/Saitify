@@ -1,6 +1,7 @@
 'use client';
 
 import { CAPABILITIES, getCategory, getTemplate, type Action, type GeneratedProject, type StepId, type WizardState } from '@saitify/configurator';
+import { MODULES } from '@saitify/platform/client';
 import { PALETTES, STYLES, defaultRegistry } from '@saitify/engine';
 import type { Dispatch, ReactNode } from 'react';
 import { StepIntro } from './fields';
@@ -78,6 +79,7 @@ export function ReviewStep({
         </Group>
         <Group title="Features" step="features" dispatch={dispatch}>
           <Row label="Included">{caps.length ? caps.map((c) => c.name).join(', ') : none}</Row>
+          <Row label="Modules">{state.modules.length ? state.modules.map((id) => MODULES.find((m) => m.id === id)?.name ?? id).join(', ') : none}</Row>
           <Row label="Wish list (not available yet)">{future.length ? future.map((c) => c.name).join(', ') : none}</Row>
         </Group>
         <Group title="Design" step="design" dispatch={dispatch}>

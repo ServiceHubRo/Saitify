@@ -20,6 +20,12 @@ export type SiteRendererProps = {
   resolveHref?: (page: Page, website: Website) => string;
   /** Year for the default copyright line. Defaults to the current year. */
   year?: number;
+  /** Data for module sections, keyed by section id. Loaded by the host only for the sections of the page being rendered. */
+  moduleData?: Record<string, unknown>;
+  /** Request details for module blocks: path below the page, query values, link prefix and form target. */
+  route?: { sub?: string[]; query?: Record<string, string>; prefix?: string; actionBase?: string };
+  /** The visitor may not see this page (members only). Its sections are not rendered at all. */
+  locked?: { loginHref: string | null; message?: string };
 };
 
 function Diagnostics({ issues }: { issues: Issue[] }) {
@@ -55,6 +61,9 @@ export function SiteRenderer({
   registry = defaultRegistry,
   resolveHref,
   year = new Date().getFullYear(),
+  moduleData,
+  route,
+  locked,
 }: SiteRendererProps) {
   const { website, issues } = validateWebsite(input, registry);
 
@@ -99,6 +108,14 @@ export function SiteRenderer({
   };
 
   const runtimeIssues: Issue[] = [];
+  const prefix = route?.prefix ?? '';
+  const pageHref = page ? hrefFor(page) : site.homeHref;
+  const baseRoute = {
+    pageHref,
+    detailBase: page ? `${prefix}/${page.slug}` : prefix,
+    query: route?.query ?? {},
+    actionBase: route?.actionBase ?? `${prefix}/_m`,
+  };
 
   function renderSection(section: Section, path: string): ReactNode {
     const block = registry.get(section.type);
@@ -112,6 +129,8 @@ export function SiteRenderer({
       design,
       site,
       mode,
+      data: moduleData?.[section.id],
+      route: { ...baseRoute, sub: block.detail ? (route?.sub ?? []) : [] },
     };
     try {
       const node = block.render(ctx);
@@ -129,7 +148,19 @@ export function SiteRenderer({
   const showHeader = page ? !page.config.hideHeader : true;
   const showFooter = page ? !page.config.hideFooter : true;
 
-  const body: ReactNode = page ? (
+  const body: ReactNode = page && locked ? (
+    <section className="sf-section sf-tone-surface sf-space-spacious sf-locked">
+      <div className="sf-container sf-narrow">
+        <h1 className="sf-h2">{page.title ?? page.name}</h1>
+        <p className="sf-lead">{locked.message ?? 'This page is for members only.'}</p>
+        {locked.loginHref ? (
+          <a className="sf-btn sf-btn--primary" href={locked.loginHref}>
+            Sign in or join
+          </a>
+        ) : null}
+      </div>
+    </section>
+  ) : page ? (
     page.sections.map((s, i) => <Fragment key={s.id}>{renderSection(s, `pages.${page.slug}.sections[${i}]`)}</Fragment>)
   ) : (
     <section className="sf-section sf-tone-default sf-space-spacious sf-notfound">
@@ -159,7 +190,8 @@ export function SiteRenderer({
     >
       {header}
       <main id="sf-main" className="sf-main">
-        {page && !page.sections.some((s) => s.visible && s.type === 'hero') ? (
+        {/* Item pages (a post, a product …) render their own h1, so the page name is not added as a second one. */}
+        {page && !locked && !(route?.sub?.length) && !page.sections.some((s) => s.visible && s.type === 'hero') ? (
           <h1 className="sf-visually-hidden">{page.title ?? page.name}</h1>
         ) : null}
         {body}

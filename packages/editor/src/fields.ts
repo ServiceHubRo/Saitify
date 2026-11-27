@@ -9,6 +9,8 @@ import { getAt, type Path } from './paths';
 export type Field =
   | { kind: 'text'; path: Path; key: string; label: string; required: boolean; max: number; multiline: boolean; kindHint?: 'href' }
   | { kind: 'select'; path: Path; key: string; label: string; required: boolean; options: string[] }
+  /** A reference to a record of a module (for example a form), chosen from the project's own records. Value is its address (slug). */
+  | { kind: 'ref'; path: Path; key: string; label: string; required: boolean; ref: string }
   | { kind: 'boolean'; path: Path; key: string; label: string }
   | { kind: 'number'; path: Path; key: string; label: string; required: boolean; min?: number; max?: number }
   | { kind: 'image'; path: Path; key: string; label: string; required: boolean }
@@ -68,6 +70,7 @@ type JS = {
   minimum?: number;
   maximum?: number;
   anyOf?: JS[];
+  description?: string;
 };
 
 const isImage = (n: JS) => n.type === 'object' && !!n.properties?.src && !!n.properties?.alt;
@@ -79,6 +82,7 @@ function build(key: string, node: JS, path: Path, required: boolean): Field | nu
     return concrete ? build(key, concrete, path, false) : null;
   }
   if (node.enum) return { kind: 'select', path, key, label, required, options: node.enum.map(String) };
+  if (node.type === 'string' && node.description?.startsWith('ref:')) return { kind: 'ref', path, key, label, required, ref: node.description.slice(4) };
   switch (node.type) {
     case 'string':
       return { kind: 'text', path, key, label, required, max: node.maxLength ?? 500, multiline: (node.maxLength ?? 0) > 120, kindHint: node.pattern?.includes('mailto') ? 'href' : undefined };
@@ -202,6 +206,7 @@ export function skeleton(fields: Field[]): Record<string, unknown> {
     if (!f.key) continue;
     if (f.kind === 'text' && f.required) out[f.key] = f.kindHint === 'href' ? '/' : `New ${f.label.toLowerCase()}`;
     else if (f.kind === 'select' && f.required) out[f.key] = f.options[0];
+    else if (f.kind === 'ref' && f.required) out[f.key] = '';
     else if (f.kind === 'image' && f.required) out[f.key] = { src: 'placeholder:new', alt: '' };
     else if (f.kind === 'group' && f.required) out[f.key] = skeleton(f.fields);
     else if (f.kind === 'number' && f.required) out[f.key] = f.min ?? 0;

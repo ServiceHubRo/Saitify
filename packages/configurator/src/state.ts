@@ -1,7 +1,7 @@
 import { PALETTE_IDS, STYLE_IDS } from '@saitify/engine';
 import { z } from 'zod';
 import { getCategory, isCategoryId } from './catalog/categories';
-import { getCapability, isPlanned, isSupported } from './catalog/capabilities';
+import { getCapability, isModuleKey, isPlanned, isSupported } from './catalog/capabilities';
 import { defaultPageName } from './catalog/i18n';
 import { getTemplate, templatesFor } from './catalog/templates';
 import { LANG_IDS, PAGE_KEYS, type CapabilityId, type CategoryId, type PageKey } from './catalog/types';
@@ -46,6 +46,8 @@ export const wizardStateSchema = z.object({
   capabilities: z.array(z.string().max(40)).max(40).default([]),
   interests: z.array(z.string().max(40)).max(40).default([]),
   capsTouched: z.boolean().default(false),
+  /** Modules chosen for the website (store, bookings …). They are switched on when the project is saved; nothing is forced. */
+  modules: z.array(z.string().max(40)).max(12).default([]),
   design: z
     .object({
       style: z.enum(STYLE_IDS).default('minimal'),
@@ -58,6 +60,13 @@ export const wizardStateSchema = z.object({
   templateId: z.string().nullable().default(null),
 });
 export type WizardState = z.infer<typeof wizardStateSchema>;
+
+/** Modules that fit the answers: the category's typical needs plus what the description mentions. Suggestions only. */
+export function suggestedModules(state: WizardState): string[] {
+  const category = isCategoryId(state.category) ? state.category : null;
+  const fromCategory = (getCategory(category)?.relatedFuture ?? []).map((c) => getCapability(c)?.module).filter((m): m is NonNullable<typeof m> => Boolean(m));
+  return [...new Set([...fromCategory, ...inferHints(category, `${state.idea.text} ${state.idea.different}`).modules])];
+}
 
 export function createInitialState(): WizardState {
   return wizardStateSchema.parse({});
@@ -74,11 +83,23 @@ export function normalizeState(input: WizardState): WizardState {
   if (!isCategoryId(s.category)) s.category = null;
   s.capabilities = [...new Set(s.capabilities.filter(isSupported))];
   s.interests = [...new Set(s.interests.filter(isPlanned))];
+  s.modules = withDependencies(s.modules.filter(isModuleKey));
   if (s.templateId && !templatesFor(s.category as CategoryId | null).some((t) => t.id === s.templateId)) s.templateId = null;
   if (s.homeId && !s.pages.some((p) => p.id === s.homeId)) s.homeId = s.pages[0]?.id ?? null;
   if (!s.homeId && s.pages[0]) s.homeId = s.pages[0].id;
   if (!getSteps(s).includes(s.step)) s.step = 'category';
   return s;
+}
+
+/** Courses need member accounts, so choosing Courses also chooses Memberships. */
+const MODULE_DEPENDENCIES: Record<string, string[]> = { courses: ['members'] };
+export function withDependencies(ids: string[]): string[] {
+  const out = new Set<string>();
+  for (const id of ids) {
+    for (const d of MODULE_DEPENDENCIES[id] ?? []) out.add(d);
+    out.add(id);
+  }
+  return [...out];
 }
 
 export type Action =
@@ -96,6 +117,7 @@ export type Action =
   | { type: 'setHome'; id: string }
   | { type: 'toggleCapability'; id: string }
   | { type: 'toggleInterest'; id: string }
+  | { type: 'toggleModule'; id: string }
   | { type: 'patchDesign'; patch: Partial<WizardState['design']> }
   | { type: 'selectTemplate'; id: string | null }
   | { type: 'goTo'; step: StepId }
@@ -201,6 +223,13 @@ export function reduce(state: WizardState, action: Action): WizardState {
       if (!isSupported(action.id)) return state;
       const has = state.capabilities.includes(action.id);
       return { ...state, capsTouched: true, capabilities: has ? state.capabilities.filter((c) => c !== action.id) : [...state.capabilities, action.id] };
+    }
+    case 'toggleModule': {
+      if (!isModuleKey(action.id)) return state;
+      const has = state.modules.includes(action.id);
+      // Removing a module another chosen module needs would break that module, so it is not possible.
+      if (has && state.modules.some((m) => MODULE_DEPENDENCIES[m]?.includes(action.id))) return state;
+      return { ...state, modules: has ? state.modules.filter((m) => m !== action.id) : withDependencies([...state.modules, action.id]) };
     }
     case 'toggleInterest': {
       if (!isPlanned(action.id)) return state;

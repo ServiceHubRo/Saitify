@@ -4,8 +4,8 @@ import { getCategory } from './catalog/categories';
 import { t } from './catalog/i18n';
 import { PAGE_DEFS } from './catalog/pages';
 import { getTemplate } from './catalog/templates';
-import type { Category, CapabilityId, Lang, Template } from './catalog/types';
-import { slugify, type PageState } from './pages';
+import type { Category, CapabilityId, Lang, PageKey, Template } from './catalog/types';
+import { slugify, uniqueSlug, type PageState } from './pages';
 import { normalizeState, type WizardState } from './state';
 import { normalizeUrl, firstInvalidStep } from './validate';
 
@@ -26,6 +26,8 @@ export type Vision = {
   supportedCapabilities: string[];
   /** Capabilities the user would like in the future. Nothing for them is generated. */
   requestedFutureCapabilities: string[];
+  /** Modules to switch on for this website (their sections are already in the configuration). */
+  modules: string[];
   idea: WizardState['idea'];
 };
 
@@ -229,6 +231,41 @@ export function generateProject(input: WizardState): GeneratedProject {
     if (caps.has('location') && info.address.trim() && !hasBlock('location')) addTo(home, location(home.page));
   }
 
+  /*
+   * Modules the person chose add their sections: to a fitting existing page (a "Products" page gets the catalog) or to a new
+   * page of their own. The module itself is switched on by the platform when the project is saved.
+   */
+  const chosen = new Set(state.modules);
+  const taken = () => pagesBuilt.map((p) => p.page.slug);
+  const moduleSection = (page: PageState, type: string, heading: string, extra: Record<string, unknown> = {}): SectionSpec => ({ id: sid(page, type), type, style: style(), content: { heading, ...extra } });
+  const ensurePage = (key: string, type: string, heading: string, reuse?: PageKey, extra: Record<string, unknown> = {}) => {
+    const existing = reuse ? pagesBuilt.find((p) => p.page.key === reuse) : undefined;
+    if (existing) {
+      // The module section replaces the placeholder showcase that page had.
+      existing.sections = existing.sections.filter((s) => s.type !== 'services');
+      existing.sections.unshift(moduleSection(existing.page, type, heading, extra));
+      return;
+    }
+    const name = t(lang, `mod.${key}`);
+    const page: PageState = { id: `m-${key}`, key: 'custom', name, slug: uniqueSlug(slugify(name), taken(), key) };
+    pagesBuilt.push({ page, sections: [moduleSection(page, type, heading, extra)] });
+  };
+  if (chosen.has('store')) {
+    ensurePage('shop', 'store', t(lang, 'mod.shop.heading'), 'products');
+    ensurePage('cart', 'cart', t(lang, 'mod.cart.heading'));
+  }
+  if (chosen.has('blog')) ensurePage('blog', 'blog', t(lang, 'mod.blog.heading'));
+  if (chosen.has('booking')) ensurePage('book', 'booking', t(lang, 'mod.book.heading'));
+  if (chosen.has('events')) ensurePage('events', 'events', t(lang, 'mod.events.heading'), 'events');
+  if (chosen.has('directory')) ensurePage('directory', 'directory', t(lang, 'mod.directory.heading'));
+  if (chosen.has('courses')) ensurePage('courses', 'courses', t(lang, 'mod.courses.heading'), 'courses');
+  if (chosen.has('members')) ensurePage('account', 'member-area', t(lang, 'mod.account.heading'));
+  if (chosen.has('forms')) {
+    // The Forms module creates a "contact" form when it is switched on; this section shows it.
+    const target = pagesBuilt.find((p) => p.page.key === 'contact') ?? home;
+    if (target) addTo(target, moduleSection(target.page, 'form', t(lang, 'mod.form.heading'), { form: 'contact' }));
+  }
+
   const nav = pagesBuilt.map(({ page }) => ({ label: page.name, page: page.slug }));
   const callCta = showPhone ? { label: t(lang, 'cta.call'), href: `tel:${phone.replace(/[^+0-9]/g, '')}` } : undefined;
   const headerCta = callCta ?? (contactPage ? { label: t(lang, 'cta.contact'), href: hrefFor(contactPage, homeId) } : undefined);
@@ -277,6 +314,7 @@ export function generateProject(input: WizardState): GeneratedProject {
     templateId: tpl?.id ?? null,
     supportedCapabilities: state.capabilities.filter((c) => getCapability(c)?.status === 'supported'),
     requestedFutureCapabilities: state.interests.filter((c: string) => getCapability(c as CapabilityId)?.status === 'planned'),
+    modules: state.modules,
     idea: state.idea,
   };
   return {

@@ -2,6 +2,8 @@ import { PALETTE_IDS, STYLE_IDS, SiteRenderer, defaultRegistry, websiteSchema } 
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
+  MODULE_KEYS,
+  suggestedModules,
   CAPABILITIES,
   CATEGORIES,
   TEMPLATES,
@@ -79,7 +81,7 @@ describe('category catalog', () => {
       expect(c.pages.recommended.every((k) => c.pages.available.includes(k)), c.id).toBe(true);
       expect(c.pages.recommended[0]).toBe('home');
       expect(c.recommendedCapabilities.every((id) => CAPABILITIES.find((x) => x.id === id)?.status === 'supported'), c.id).toBe(true);
-      expect(c.relatedFuture.every((id) => CAPABILITIES.find((x) => x.id === id)?.status === 'planned'), c.id).toBe(true);
+      expect(c.relatedFuture.every((id) => ['planned', 'module'].includes(CAPABILITIES.find((x) => x.id === id)!.status)), c.id).toBe(true);
     }
   });
   it.each([
@@ -97,10 +99,13 @@ describe('category catalog', () => {
   });
   it('reads the description for extra recommendations', () => {
     expect(inferHints('portfolio', 'I take photos and want a gallery').pages).toContain('gallery');
-    expect(inferHints('portfolio', 'clients can book a session').interests).toContain('appointment-booking');
-    expect(inferHints('portfolio', 'Vreau programări online').interests).toContain('appointment-booking');
+    // Capabilities delivered by modules are suggested as modules, never ticked automatically.
+    expect(inferHints('portfolio', 'clients can book a session').modules).toContain('booking');
+    expect(inferHints('portfolio', 'Vreau programări online').modules).toContain('booking');
     const s = run(createInitialState(), { type: 'setCategory', category: 'restaurant' }, { type: 'patchIdea', patch: { text: 'We want people to reserve a table' } });
-    expect(s.interests).toContain('reservations');
+    expect(suggestedModules(s)).toContain('booking');
+    expect(s.modules).toEqual([]);
+    expect(inferHints('portfolio', 'we also want card payments').interests).toContain('online-payments');
   });
   it('shows category-specific questions only', () => {
     expect(getCategory('restaurant')!.fields.map((f) => f.id)).toContain('cuisine');
@@ -147,16 +152,45 @@ describe('page management', () => {
   });
 });
 
+describe('modules (Phase 8)', () => {
+  it('maps module capabilities to the platform module ids', () => {
+    for (const c of CAPABILITIES.filter((x) => x.status === 'module')) expect(MODULE_KEYS).toContain(c.module);
+  });
+  it('adds module pages and sections only for modules the person chose, with dependencies', () => {
+    const base = filled('store');
+    const sectionTypes = (w: ReturnType<typeof generateProject>) => w.website!.pages.flatMap((p) => p.sections.map((x) => x.type));
+    expect(sectionTypes(generateProject(base)).filter((t) => defaultRegistry.get(t)?.module)).toEqual([]);
+    const s = run(base, { type: 'toggleModule', id: 'store' }, { type: 'toggleModule', id: 'forms' }, { type: 'toggleModule', id: 'courses' }, { type: 'toggleModule', id: 'nope' });
+    expect(s.modules).toEqual(['store', 'forms', 'members', 'courses']);
+    expect(reduce(s, { type: 'toggleModule', id: 'members' })).toBe(s); // courses needs it
+    const out = generateProject(s);
+    expect(out.valid).toBe(true);
+    expect(out.issues.filter((i) => i.severity === 'error')).toEqual([]);
+    const types = out.website!.pages.flatMap((p) => p.sections.map((x) => x.type));
+    expect(types).toEqual(expect.arrayContaining(['store', 'cart', 'form', 'courses', 'member-area']));
+    const products = out.website!.pages.find((p) => p.sections.some((x) => x.type === 'store'))!;
+    expect(products.sections.map((x) => x.type)).not.toContain('services'); // the placeholder showcase is replaced
+    expect(new Set(out.website!.pages.map((p) => p.slug)).size).toBe(out.website!.pages.length);
+    expect(out.vision.modules).toEqual(['store', 'forms', 'members', 'courses']);
+    const off = run(s, { type: 'toggleModule', id: 'courses' });
+    expect(off.modules).toEqual(['store', 'forms', 'members']);
+  });
+  it('drops unknown module ids from saved drafts', () => {
+    const raw = JSON.stringify({ v: 1, savedAt: 1, state: { ...filled('blog'), modules: ['blog', 'hack'] } });
+    expect(parseDraft(raw)!.modules).toEqual(['blog']);
+  });
+});
+
 describe('capabilities', () => {
   it('marks unsupported capabilities as planned and keeps them out of the website', () => {
-    expect(CAPABILITIES.filter((c) => c.status === 'planned').map((c) => c.id)).toEqual(expect.arrayContaining(['online-store', 'online-payments', 'appointment-booking', 'reservations', 'customer-accounts', 'blog-cms', 'courses', 'memberships', 'events', 'search', 'directory-listings', 'contact-form', 'newsletter']));
+    expect(CAPABILITIES.filter((c) => c.status === 'planned').map((c) => c.id).sort()).toEqual(['newsletter', 'online-payments', 'search']);
     const s = filled('store');
-    expect(reduce(s, { type: 'toggleCapability', id: 'online-store' })).toBe(s);
+    expect(reduce(s, { type: 'toggleCapability', id: 'online-payments' })).toBe(s);
     expect(reduce(s, { type: 'toggleInterest', id: 'gallery' })).toBe(s);
-    const wished = run(s, { type: 'toggleInterest', id: 'online-store' }, { type: 'toggleInterest', id: 'online-payments' });
+    expect(reduce(s, { type: 'toggleInterest', id: 'online-store' })).toBe(s); // a module now, not a wish
+    const wished = run(s, { type: 'toggleInterest', id: 'online-payments' }, { type: 'toggleInterest', id: 'newsletter' });
     const out = generateProject(wished);
-    expect(out.vision.requestedFutureCapabilities).toEqual(['online-store', 'online-payments']);
-    expect(out.vision.supportedCapabilities).not.toContain('online-store');
+    expect(out.vision.requestedFutureCapabilities).toEqual(['online-payments', 'newsletter']);
     expect(out.valid).toBe(true);
     expect(JSON.stringify(out.config)).not.toMatch(/cart|checkout|payment/i);
   });

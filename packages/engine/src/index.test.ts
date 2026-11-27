@@ -3,7 +3,7 @@ import { CONFIG_SCHEMA_VERSION, ENGINE_VERSION, tokens } from './index';
 
 describe('engine', () => {
   it('exposes versions', () => {
-    expect(ENGINE_VERSION).toBe('0.2.0');
+    expect(ENGINE_VERSION).toBe('0.3.0');
     expect(CONFIG_SCHEMA_VERSION).toBe(1);
   });
 

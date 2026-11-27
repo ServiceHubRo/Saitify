@@ -3,6 +3,9 @@
 import { getAt, humanize, skeleton, type Field } from '@saitify/editor';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Icon } from './icons';
+import { KIND_DEFS, isKind } from '@saitify/platform/client';
+import { useModules } from './module-context';
+import { useOptions } from '../modules/shared';
 import { Select } from './select';
 
 export type PageOption = { value: string; label: string };
@@ -201,6 +204,8 @@ function FieldView({ field, ctx, base }: { field: Field; ctx: FieldCtx; base: re
           <Select label={field.label} value={typeof value === 'string' ? value : null} placeholder="Not set" options={[...(field.required ? [] : [{ value: '__none', label: 'None' }]), ...field.options.map((o) => ({ value: o, label: humanize(o) }))]} onChange={(v) => ctx.set(path, v === '__none' ? undefined : v)} />
         </div>
       );
+    case 'ref':
+      return <RefControl field={field} value={value} onChange={(v) => ctx.set(path, v)} fieldKey={key} />;
     case 'boolean':
       return (
         <label data-field-path={key} className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl border border-midnight/15 px-3 text-[15px]">
@@ -358,6 +363,28 @@ export function FieldForm({ fields, ctx }: { fields: Field[]; ctx: FieldCtx }) {
       {fields.map((f) => (
         <FieldView key={f.path.join('.')} field={f} ctx={ctx} base={[]} />
       ))}
+    </div>
+  );
+}
+
+/** Picks a record of a module (for example which form a Form section shows), by its address. */
+function RefControl({ field, value, onChange, fieldKey }: { field: Extract<Field, { kind: 'ref' }>; value: unknown; onChange: (v: string) => string | null; fieldKey: string }) {
+  const { projectId, active } = useModules();
+  const def = isKind(field.ref) ? KIND_DEFS[field.ref] : undefined;
+  const on = def ? active.includes(def.module) : false;
+  const options = useOptions(projectId, def?.module ?? '', on ? field.ref : undefined);
+  const [err, setErr] = useState<string | null>(null);
+  const current = typeof value === 'string' ? value : '';
+  if (!def || !on) return <p data-field-path={fieldKey} className="text-[13px] text-midnight/70">Switch on the module to choose a {def?.label.toLowerCase() ?? 'record'}.</p>;
+  if (!options) return <p data-field-path={fieldKey} className="text-[13px] text-midnight/60">Loading…</p>;
+  const list = options.filter((o) => o.slug);
+  const missing = current && !list.some((o) => o.slug === current);
+  return (
+    <div data-field-path={fieldKey}>
+      <Select label={field.label} value={current || null} placeholder={`Choose a ${def.label.toLowerCase()}`} options={[...list.map((o) => ({ value: o.slug!, label: o.status === def.publicStatus ? o.title : `${o.title} (${o.status})` })), ...(missing ? [{ value: current, label: `${current} (not found)` }] : [])]} onChange={(v) => setErr(onChange(v))} />
+      {list.length === 0 ? <p className="mt-1 text-[12.5px] text-midnight/70">No {def.plural.toLowerCase()} yet. <a className="font-semibold text-violet underline" href={`/dashboard/projects/${projectId}/modules/${def.module}`}>Create one</a>.</p> : null}
+      {missing ? <p className="mt-1 text-[12.5px] text-red-700">This {def.label.toLowerCase()} does not exist any more. Choose another.</p> : null}
+      {err ? <p role="alert" className="mt-1 text-[12.5px] text-red-700">{err}</p> : null}
     </div>
   );
 }

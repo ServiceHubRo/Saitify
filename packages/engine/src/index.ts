@@ -1,7 +1,7 @@
 import { SCHEMA_VERSION } from './schema/website';
 
 /** Engine package version. Bumped when the public API changes. */
-export const ENGINE_VERSION = '0.2.0';
+export const ENGINE_VERSION = '0.3.0';
 
 /** Version of the site config schema. Every stored config carries this number. */
 export const CONFIG_SCHEMA_VERSION = SCHEMA_VERSION;
@@ -49,11 +49,15 @@ export {
   type BlockContext,
   type BlockDefinition,
   type BlockRegion,
+  type BlockRoute,
   type BlockVariant,
   type RenderSite,
 } from './registry/types';
-export { INITIAL_BLOCKS, defaultRegistry } from './blocks';
+export { INITIAL_BLOCKS, ALL_BLOCKS, defaultRegistry } from './blocks';
 export { SiteRenderer, type SiteRendererProps } from './render/site-renderer';
+
+/* Module blocks and their data contracts (Phase 8) */
+export * from './modules';
 
 /* Demo configurations (development and tests) */
 export { DEMOS, type Demo } from './demos';
