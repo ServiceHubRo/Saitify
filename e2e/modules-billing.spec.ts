@@ -97,3 +97,32 @@ test('module access and caps follow the plan, with upgrade hints; downgrades kee
   expect((await other.request.post(`/api/projects/${p2}/modules/store`, { data: { action: 'enable' }, headers: origin(baseURL) })).status()).toBe(200);
   await other.close();
 });
+
+test('deleting an account with an active subscription cancels it at Stripe first, and keeps the account if that fails', async ({ browser, request, baseURL }) => {
+  // An administrator defines a paid plan.
+  const admin = await (await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': `10.6.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` } })).newPage();
+  const reg = await admin.request.post('/api/auth/register', { data: { name: 'Admin', email: ADMIN, password: 'correct-horse-battery', confirm: 'correct-horse-battery', acceptTerms: true }, headers: origin(baseURL) });
+  if (reg.status() === 201) await admin.goto(await waitForLink(ADMIN, /Confirm your email/));
+  expect((await admin.request.post('/api/auth/login', { data: { email: ADMIN, password: 'correct-horse-battery' }, headers: origin(baseURL) })).status()).toBeLessThan(300);
+  const planId = `d${uniq()}`;
+  const plan = await adminPlan(admin.request, admin, baseURL, planId, 50, {});
+  await admin.close();
+
+  // A customer subscribes; the mock Stripe knows the subscription.
+  const page = await (await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': `10.5.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` } })).newPage();
+  const email = await register(page);
+  expect((await page.request.post('/api/billing/checkout', { data: { plan: planId, interval: 'month' }, headers: origin(baseURL) })).status()).toBeLessThan(300);
+  const customer = (await (await request.get(`${MOCK}/__customer?email=${encodeURIComponent(email)}`)).json()).id as string;
+  const now = Math.floor(Date.now() / 1000);
+  const subId = `sub_${customer}`;
+  await request.post(`${MOCK}/__sub`, { data: { id: subId, status: 'active', customer, cancel_at_period_end: false, price: plan.monthly, start: now, end: now + 30 * 86400 } });
+  expect((await webhook(request, subEvent(customer, plan.monthly))).status()).toBe(200);
+  await request.post(`${MOCK}/__reset`);
+
+  // Deleting the account cancels the subscription first.
+  const del = await page.request.delete('/api/account', { data: { password: 'correct-horse-battery', confirmText: 'DELETE' }, headers: origin(baseURL) });
+  expect(del.status(), await del.text()).toBeLessThan(300);
+  const calls = (await (await request.get(`${MOCK}/__calls`)).json()) as { method: string; path: string }[];
+  expect(calls.some((c) => c.method === 'DELETE' && c.path === `/v1/subscriptions/${subId}`)).toBe(true);
+  await page.close();
+});

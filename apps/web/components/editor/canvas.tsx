@@ -10,18 +10,21 @@ import type { Selection } from './types';
 function useFit(designWidth: number) {
   const [el, setEl] = useState<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
-  useEffect(() => {
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
     if (!el) return;
     const update = () => {
       const pad = el.clientWidth >= 640 ? 48 : 24;
       setScale(Math.max(0.1, Math.min(1, (el.clientWidth - pad) / designWidth)));
+      setReady(true);
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
   }, [el, designWidth]);
-  return { ref: setEl, scale };
+  // `ready` is false until the first measurement, so the page is never painted at the wrong size and then jumps to the fitted one.
+  return { ref: setEl, scale, ready };
 }
 
 export const DEVICES = [
@@ -80,7 +83,7 @@ export function Canvas({
   moduleData?: Record<string, unknown>;
 }) {
   const width = DEVICES.find((d) => d.id === device)!.width;
-  const { ref: fitRef, scale } = useFit(width);
+  const { ref: fitRef, scale, ready } = useFit(width);
   const scroller = useRef<HTMLDivElement | null>(null);
   const layer = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
@@ -226,7 +229,7 @@ export function Canvas({
         </p>
       ) : null}
       <div ref={setRefs} data-testid="editor-scroller" className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6">
-        <div ref={layer} className="relative mx-auto" style={{ width: width * scale }}>
+        <div ref={layer} className="relative mx-auto" style={{ width: width * scale, visibility: ready ? undefined : 'hidden' }}>
           <div
             ref={frame}
             key={nonce}
