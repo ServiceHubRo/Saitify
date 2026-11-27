@@ -10,11 +10,21 @@ const rnd = () => Math.floor(Math.random() * 250) + 1;
 /** Every test gets its own network address so the per-IP rate limits never couple tests together. */
 const fakeIp = () => `10.${rnd()}.${rnd()}.${rnd()}`;
 
-export const test = base.extend({
+export const test = base.extend<object, { browser: import('@playwright/test').Browser }>({
   extraHTTPHeaders: async ({ baseURL }, use) => {
     void baseURL;
     await use({ 'x-test-ip': fakeIp() });
   },
+  // Extra browser contexts that tests open themselves (a second visitor, another account) need their own network address too.
+  // Without it they all share the limiter's "unknown" address, and the hourly sign-up limit trips late in a long run (seen as
+  // random failures in the last viewports of the 7-viewport suite). Tests that pass their own x-test-ip keep it.
+  browser: [async ({ browser }, use) => {
+    const original = browser.newContext.bind(browser);
+    browser.newContext = ((options: Parameters<typeof original>[0] = {}) =>
+      original({ ...options, extraHTTPHeaders: { 'x-test-ip': fakeIp(), ...(options?.extraHTTPHeaders ?? {}) } })) as typeof browser.newContext;
+    await use(browser);
+    browser.newContext = original;
+  }, { scope: 'worker' }],
 });
 
 export const uniqueEmail = (label = 'user') => `${label}.${Date.now().toString(36)}${(counter++).toString(36)}${rnd()}@example.com`;

@@ -271,3 +271,44 @@ test.describe('Journey: the published website', () => {
     expect(violations).toEqual([]);
   });
 });
+
+test.describe('Journey: preview', () => {
+  test('the preview on the project page shows the saved version, page by page and device by device', async ({ page, baseURL }) => {
+    await signedIn(page, baseURL);
+    const id = await createProject(page, baseURL, 'Preview Lab');
+    // Edit through the editor, so the saved version is what a person would have produced.
+    await page.goto(`/editor/${id}`);
+    await selectSection(page, /^Hero/);
+    await page.getByRole('textbox', { name: /^Heading/ }).fill('Previzualizare „nouă”');
+    await savedAfter(page);
+
+    await page.goto(`/dashboard/projects/${id}`);
+    const frame = page.getByTestId('preview-frame');
+    await expect(frame.getByRole('heading', { level: 1 }).first()).toHaveText('Previzualizare „nouă”');
+    // Other pages of the same website are reachable from the preview's own page switcher and show their own content.
+    const pageSwitch = page.getByLabel('Preview page');
+    const names = await pageSwitch.locator('option').allTextContents();
+    expect(names.length).toBeGreaterThan(1);
+    await pageSwitch.selectOption({ index: 1 });
+    await expect(frame.getByRole('heading', { level: 1 }).first()).not.toHaveText('Previzualizare „nouă”');
+    await pageSwitch.selectOption({ index: 0 });
+    await expect(frame.getByRole('heading', { level: 1 }).first()).toHaveText('Previzualizare „nouă”');
+    // Devices change the width the website is drawn at, not its content.
+    const widthOf = async () => (await page.getByTestId('preview-frame').evaluate((e) => (e as HTMLElement).style.width));
+    const desktop = await widthOf();
+    await page.getByRole('button', { name: 'Mobile', exact: true }).click();
+    await expect.poll(widthOf).not.toBe(desktop);
+    await expect(frame.getByRole('heading', { level: 1 }).first()).toHaveText('Previzualizare „nouă”');
+    // Links inside the preview never navigate away from the page.
+    const before = page.url();
+    await frame.getByRole('link').first().click({ force: true }).catch(() => undefined);
+    expect(page.url()).toBe(before);
+    // A later edit is visible after a reload, never before it is saved.
+    await page.goto(`/editor/${id}`);
+    await selectSection(page, /^Hero/);
+    await page.getByRole('textbox', { name: /^Heading/ }).fill('Versiunea a doua');
+    await savedAfter(page);
+    await page.goto(`/dashboard/projects/${id}`);
+    await expect(page.getByTestId('preview-frame').getByRole('heading', { level: 1 }).first()).toHaveText('Versiunea a doua');
+  });
+});

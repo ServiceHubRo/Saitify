@@ -12,3 +12,4 @@ playwright-report
 next-env.d.ts
 .e2e-data/
 .e2e-data3200
+.e2e-data3300
