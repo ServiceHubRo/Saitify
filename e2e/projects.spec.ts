@@ -8,40 +8,57 @@ async function create(request: APIRequestContext, baseURL: string | undefined, n
   return (await r.json()).project as { id: string; name: string; status: string; revision: number };
 }
 
-test.describe('guest to account', () => {
-  test('a finished guest draft becomes a configured project after registering', async ({ page }) => {
+test.describe('authentication is required to build', () => {
+  test('a visitor is sent to sign in, registers, and lands in the configurator', async ({ page }) => {
+    const r = await page.goto('/create');
+    expect(new URL(page.url()).pathname).toBe('/login');
+    expect(new URL(page.url()).searchParams.get('next')).toBe('/create');
+    expect(r!.status()).toBe(200); // the redirect itself is asserted below with a raw request
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(page).toHaveURL(/\/register\?next=%2Fcreate$/);
+    await register(page, { next: '/create' });
+    await expect(page).toHaveURL(/\/create$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'What do you want to create?' })).toBeVisible();
+  });
+
+  test('the server answers 307 to sign in for every private page, without rendering anything private', async ({ request }) => {
+    for (const path of ['/create', '/create?template=clean-business', '/create/save', '/dashboard', '/billing', '/account', '/admin/plans', '/edit/00000000-0000-4000-8000-000000000000', '/editor/00000000-0000-4000-8000-000000000000']) {
+      const res = await request.get(path, { maxRedirects: 0 });
+      expect(res.status(), path).toBe(307);
+      expect(res.headers().location, path).toContain(`/login?next=${encodeURIComponent(path)}`);
+      expect(res.headers()['cache-control'], path).toContain('no-store');
+    }
+    // Public pages stay public.
+    for (const path of ['/', '/features', '/templates', '/pricing', '/faq', '/contact', '/terms', '/privacy', '/login', '/register']) expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(200);
+  });
+
+  test('a forged session cookie passes the edge but gets nothing from the server', async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': `10.5.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` } });
+    await ctx.addCookies([{ name: 'saitify_session', value: 'forged-token-0123456789abcdef', url: baseURL! }]);
+    const page = await ctx.newPage();
+    await page.goto('/create');
+    await expect(page).toHaveURL(/\/login\?next=%2Fcreate$/); // the page itself validated the session and refused it
+    const api = await page.request.post('/api/projects', { data: { wizard: restaurantState('review') }, headers: origin(baseURL) });
+    expect(api.status()).toBe(401);
+    await ctx.close();
+  });
+
+  test('a draft kept in this browser is restored after signing in again, and finishing creates one project', async ({ page }) => {
+    await register(page);
     await seedGuestDraft(page, restaurantState('review'));
-    await register(page, { next: '/create/save' });
+    await page.goto('/create');
+    await expect(page.getByText('We restored your saved draft from this device.')).toBeVisible();
+    await page.getByRole('button', { name: 'Create my website configuration' }).click();
     await expect(page).toHaveURL(/\/dashboard\/projects\/[0-9a-f-]+\?created=1/);
-    await expect(page.getByRole("heading", { level: 1 }).first()).toContainText('Casa Brașov');
-    await page.goto('/dashboard');
-    await expect(page.getByTestId('project-list')).toContainText('Casa Brașov');
-    await expect(page.getByTestId('project-list')).not.toContainText(/published|live/i);
-  });
-
-  test('a half-finished draft reopens in the wizard', async ({ page }) => {
-    await seedGuestDraft(page, restaurantState('info'));
-    await register(page, { next: '/create/save' });
-    await expect(page).toHaveURL(/\/edit\/[0-9a-f-]+/);
-    await expect(page.getByLabel(/business name|name of/i).first()).toHaveValue('Casa Brașov');
-  });
-
-  test('an expired draft is not imported', async ({ page }) => {
-    await seedGuestDraft(page, restaurantState('review'), Date.now() - 40 * 86_400_000);
-    await register(page, { next: '/create/save' });
-    await expect(page.getByRole("heading", { level: 1 }).first()).toContainText(/expired|nothing to save/i);
-    await page.goto('/dashboard');
-    await expect(page.getByTestId('project-list')).toHaveCount(0);
-  });
-
-  test('opening the save page in two tabs creates one project', async ({ page, context }) => {
-    await seedGuestDraft(page, restaurantState('review'));
-    await register(page, { next: '/create/save' });
-    await page.waitForURL(/\/dashboard\/projects\//);
-    const p2 = await context.newPage();
-    await p2.goto('/create/save');
     await page.goto('/dashboard');
     await expect(page.getByTestId('project-list').getByRole('article')).toHaveCount(1);
+    await expect(page.getByTestId('project-list')).toContainText('Casa Brașov');
+  });
+
+  test('"Use this template" arrives at the configurator with its type and design chosen', async ({ page }) => {
+    await register(page, { next: '/create?template=studio-portfolio' });
+    await expect(page).toHaveURL(/\/create\?template=studio-portfolio$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Describe your idea' })).toBeVisible();
   });
 });
 

@@ -55,91 +55,14 @@ export const ROUTES = [
   '/privacy',
 ] as const;
 
-export const HOME_STEPS = [
-  { title: 'Tell us about your business', text: 'Share what you do and who you do it for.' },
-  { title: 'Choose your design', text: 'Pick a look from a curated set of professional designs.' },
-  { title: 'Customize your website', text: 'Make it yours with your own words, logo and images.' },
-  { title: 'Publish it online', text: 'Put your website live and share it with your customers.' },
-] as const;
-
 export const JOURNEY = [
-  {
-    title: 'Choose the type of website',
-    text: 'Start from what you are building: a business presence, a portfolio, a service page or something else. This tells Saitlify which structure fits you best.',
-  },
-  {
-    title: 'Tell us about your business',
-    text: 'Add your business name, what you offer and how people can reach you. This becomes the starting content of your website.',
-  },
-  {
-    title: 'Choose the visual design',
-    text: 'Browse a curated set of designs and pick the one that feels right. Colors and style are adjustable later.',
-  },
-  {
-    title: 'Choose pages and features',
-    text: 'Select the pages you need, such as Home, About, Services and Contact, and the sections that go on each.',
-  },
-  {
-    title: 'Preview and customize',
-    text: 'See your website take shape, then adjust text, images and design settings until it looks right on desktop and mobile.',
-  },
-  {
-    title: 'Publish',
-    text: 'When you are happy, publish. Your website goes online at an address you can share.',
-  },
+  { title: 'Create a free account', text: 'An account keeps your work saved and private. You do not need a card to start.' },
+  { title: 'Choose a template or start from scratch', text: 'Pick one of the starting designs, or tell us what kind of website you are building and we choose the structure.' },
+  { title: 'Tell us about your business', text: 'Your name, what you offer and how people can reach you. This becomes the first draft of your website.' },
+  { title: 'Review the generated website', text: 'Pages, sections and design are generated from your answers. You see exactly what will be created before it is saved.' },
+  { title: 'Edit and preview', text: 'Change text, colours, style and sections in the visual editor, and check desktop, tablet and mobile views.' },
+  { title: 'Publish', text: 'When you are happy, publish. Saitlify checks your website and puts it online at a free address you can share. Edit and publish again whenever you like.' },
 ] as const;
-
-export type TemplateVariant =
-  | 'beauty'
-  | 'construction'
-  | 'photography'
-  | 'consulting'
-  | 'fitness'
-  | 'restaurant';
-
-export const TEMPLATES: ReadonlyArray<{
-  id: TemplateVariant;
-  name: string;
-  category: string;
-  description: string;
-}> = [
-  {
-    id: 'beauty',
-    name: 'Atelier',
-    category: 'Beauty',
-    description: 'Soft, airy and elegant. For salons, studios and wellness practices.',
-  },
-  {
-    id: 'construction',
-    name: 'Foundry',
-    category: 'Construction',
-    description: 'Solid and confident. For builders, installers and trades.',
-  },
-  {
-    id: 'photography',
-    name: 'Aperture',
-    category: 'Photography',
-    description: 'Image-first and quiet. Lets a portfolio do the talking.',
-  },
-  {
-    id: 'consulting',
-    name: 'Meridian',
-    category: 'Consulting',
-    description: 'Clear and credible. For advisors, coaches and independent experts.',
-  },
-  {
-    id: 'fitness',
-    name: 'Pulse',
-    category: 'Fitness',
-    description: 'Bold and energetic. For trainers, gyms and studios.',
-  },
-  {
-    id: 'restaurant',
-    name: 'Saffron',
-    category: 'Restaurant and cafe',
-    description: 'Warm and inviting. For restaurants, cafes and bakeries.',
-  },
-];
 
 export const FAQ_GROUPS: ReadonlyArray<{
   title: string;
@@ -150,11 +73,11 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'How do I create my website?',
-        a: 'Saitlify is being built so that you answer a few questions about your business, pick a design, customize it and publish. The website creator is still in development. You can request early access on the contact page and we will let you know when it opens.',
+        a: 'Create a free account, choose a template or start from scratch, answer a few questions about your business and review the generated website. Then edit it in the visual editor and publish it.',
       },
       {
-        q: 'Is Saitlify available today?',
-        a: 'Not yet. This website presents the product we are building. Nothing you see in the previews is a working editor yet.',
+        q: 'Is Saitlify finished?',
+        a: 'Saitlify is in beta. The creator, editor, publishing and optional modules work today, and we are still improving them. If something does not work as you expect, please tell us on the contact page.',
       },
     ],
   },
@@ -163,7 +86,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'Do I need coding experience?',
-        a: 'No. Saitlify is designed for people with no technical background. You work with text, images and design choices, never code.',
+        a: 'No. You work with text, colours and sections, never code.',
       },
     ],
   },
@@ -172,11 +95,11 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'Can I edit my website later?',
-        a: 'Yes, that is the plan. You will be able to return and change text, images and design whenever you like. This is part of the product we are building and is not available yet.',
+        a: 'Yes. Open your project from the dashboard, change text, colours, layout and sections in the visual editor, and publish again when you are ready.',
       },
       {
         q: 'Can I use my own logo and images?',
-        a: 'Yes, that is planned. Your own logo and images are a core part of making a website yours.',
+        a: 'You can add images and a logo by their web address (a link). Uploading files from your computer is not available yet.',
       },
       {
         q: 'Can I create multiple websites?',
@@ -184,7 +107,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
       },
       {
         q: 'Can I choose a template?',
-        a: 'You can browse design previews on the Templates page today. Choosing and applying a template comes with the website creator and is not available yet.',
+        a: 'Yes. Browse the Templates page and choose "Use this template", or pick one inside the creator. You can also start without a template.',
       },
     ],
   },
@@ -193,7 +116,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'Will my website work on mobile?',
-        a: 'Yes. Websites created with Saitlify are designed to work well on phones, tablets and desktop screens.',
+        a: 'Yes. Websites are designed to work on phones, tablets and desktops, and you can preview each size in the editor before publishing.',
       },
     ],
   },
@@ -202,11 +125,11 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'How do I publish?',
-        a: 'Publishing is planned as a single step: when you are ready, you publish and your website goes online. It is not available yet.',
+        a: 'Press Publish in your project. Saitlify checks the website first and tells you plainly if something needs fixing, then puts it online. Earlier published versions can be restored.',
       },
       {
         q: 'Can I use my own domain?',
-        a: 'Connecting your own domain is something we want to support, but the details are not decided yet. We will confirm it before launch.',
+        a: 'Not yet. Your website is published at a free Saitlify address. Custom domains are something we want to support but they are not available today.',
       },
     ],
   },
@@ -215,7 +138,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'How much does Saitlify cost?',
-        a: 'You can start on the Free plan without a card. Paid plans, when available, are listed with their real prices on the Pricing page.',
+        a: 'You can start on the Free plan without a card. Paid plans are listed with their real prices and limits on the Pricing page.',
       },
       {
         q: 'What happens if I cancel?',
@@ -228,7 +151,7 @@ export const FAQ_GROUPS: ReadonlyArray<{
     items: [
       {
         q: 'How can I reach you?',
-        a: 'Use the contact form. Messages cannot be delivered until our email connection is configured, so if you see an error, please try again later.',
+        a: 'Use the contact form and we will reply by email. If you see an error when sending, please try again a little later.',
       },
     ],
   },

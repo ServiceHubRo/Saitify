@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, signedIn, test } from './helpers';
 
 const KEY = 'saitify:configurator:draft';
 const STEPS = ['category', 'idea', 'info', 'pages', 'features', 'design', 'template', 'review'] as const;
@@ -35,6 +36,11 @@ async function seed(page: Page, raw: string | null) {
     }
   }, [KEY, raw]);
 }
+
+// Creating a website needs an account (Phase 9): every test in this file runs as a signed-in user.
+test.beforeEach(async ({ page }) => {
+  await signedIn(page);
+});
 
 const h1 = (page: Page) => page.locator('h1:not(.sf-h1)');
 const next = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -111,9 +117,11 @@ test('the full flow creates a valid configuration for a restaurant', async ({ pa
   await expect(page.getByText(/Wish list/)).toBeVisible();
   await expect(page.getByText('Bookings', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Create my website configuration' }).click();
-  await expect(page.getByTestId('finished')).toBeVisible();
-  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Download configuration/ }).click()]);
-  expect(download.suggestedFilename()).toBe('casa-test.saitlify.json');
+  // Signed in: the configuration is saved to the account and the project page opens (no guest "download first" step any more).
+  await expect(page).toHaveURL(/\/dashboard\/projects\/[0-9a-f-]+\?created=1/);
+  await expect(page.getByRole('heading', { level: 1 }).first()).toContainText('Casa Test');
+  await page.goto('/dashboard');
+  await expect(page.getByTestId('project-list').getByRole('article')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 

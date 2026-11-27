@@ -6,7 +6,7 @@ import { subjectForTopic } from '../../../lib/contact';
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: 'Get in touch with Saitlify or request early access.',
+  description: 'Get in touch with Saitlify: questions, feedback or beta issues.',
   alternates: { canonical: '/contact' },
   openGraph: { url: '/contact', title: 'Contact | Saitlify' },
 };
@@ -18,7 +18,6 @@ export default async function ContactPage({
 }) {
   const { topic } = await searchParams;
   const topicValue = Array.isArray(topic) ? topic[0] : topic;
-  const earlyAccess = topicValue === 'early-access';
   const pricing = topicValue === 'pricing';
 
   return (
@@ -26,16 +25,14 @@ export default async function ContactPage({
       <Container>
         <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
           <div>
-            <Badge>{earlyAccess ? 'Early access' : pricing ? 'Pricing' : 'Contact'}</Badge>
+            <Badge>{pricing ? 'Pricing' : 'Contact'}</Badge>
             <h1 className="mt-5 text-4xl font-semibold tracking-tight text-midnight sm:text-5xl [text-wrap:balance]">
-              {earlyAccess ? 'Get early access' : pricing ? 'Tell us you are interested' : 'Get in touch'}
+              {pricing ? 'Ask about pricing' : 'Get in touch'}
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-midnight/70">
-              {earlyAccess
-                ? 'The Saitlify website creator is in development. Leave your details and we will let you know when you can create your website.'
-                : pricing
-                  ? 'Pricing has not been announced yet. Leave your details and we will contact you when it is ready.'
-                  : 'Questions, feedback or ideas? Send us a message and we will reply by email.'}
+              {pricing
+                ? 'The plans and prices are on the Pricing page. If something is unclear, or you need something that is not listed, write to us.'
+                : 'Questions, feedback or something not working in the beta? Send us a message and we will reply by email.'}
             </p>
             <p className="mt-6 rounded-2xl bg-white p-5 text-sm leading-relaxed text-midnight/65">
               We only use your details to reply to your message. See the{' '}

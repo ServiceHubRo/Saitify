@@ -57,7 +57,6 @@ export function looksLikeSpam(input: ContactInput): boolean {
 }
 
 export function subjectForTopic(topic: string | undefined): string {
-  if (topic === 'early-access') return 'Early access request';
-  if (topic === 'pricing') return 'Pricing interest';
+  if (topic === 'pricing') return 'Pricing question';
   return '';
 }

@@ -141,7 +141,7 @@ export function PageHero({
 
 export function CtaBand({
   title = 'Your website starts with an idea.',
-  text = 'Describe your idea, answer a few simple questions and see your website take shape. Publishing and accounts are coming next.',
+  text = 'Create a free account, answer a few simple questions and see your website take shape. No card needed.',
 }: {
   title?: string;
   text?: string;

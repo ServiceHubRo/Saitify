@@ -49,8 +49,8 @@ describe('looksLikeSpam', () => {
 
 describe('subjectForTopic', () => {
   it('maps known topics and ignores unknown ones', () => {
-    expect(subjectForTopic('early-access')).toBe('Early access request');
-    expect(subjectForTopic('pricing')).toBe('Pricing interest');
+    expect(subjectForTopic('early-access')).toBe('');
+    expect(subjectForTopic('pricing')).toBe('Pricing question');
     expect(subjectForTopic('nope')).toBe('');
     expect(subjectForTopic(undefined)).toBe('');
   });
