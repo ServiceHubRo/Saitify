@@ -130,7 +130,7 @@ test.describe('publishing: API and public site', () => {
     const name = uniq();
     expect((await publishApi(page.request, baseURL, a.id, name)).status()).toBeLessThan(300);
 
-    const ctx = await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': '10.77.1.1' } });
+    const ctx = await browser.newContext({ baseURL });
     const other = ctx.request;
     await apiRegisterAndLogin(other, baseURL ?? `http://localhost:${PORT}`);
     const b = await create(other, baseURL, 'Site B');
@@ -153,7 +153,7 @@ test.describe('publishing: API and public site', () => {
       const r = await anon.request[m](`/api/projects/${p.id}/${path}`, { headers: origin(baseURL), ...(m === 'post' ? { data: {} } : {}) });
       expect(r.status(), `${m} ${path}`).toBe(401);
     }
-    const other = await browser.newContext({ baseURL, extraHTTPHeaders: { 'x-test-ip': '10.78.2.2' } });
+    const other = await browser.newContext({ baseURL });
     await apiRegisterAndLogin(other.request, baseURL ?? `http://localhost:${PORT}`);
     const r = await other.request.post(`/api/projects/${p.id}/publish`, { data: { subdomain: uniq() }, headers: origin(baseURL) });
     expect(r.status()).toBe(404);
