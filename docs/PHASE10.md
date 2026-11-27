@@ -30,7 +30,7 @@ The product can be used internally today: every core journey passes, no P0 or P1
 Plus one informational note and three suspected problems that investigation withdrew.
 
 **Fixed:** the editor's More menu off-screen at 360/390 px (P2: website settings were unreachable on common phones); the published websites' CSP blocking their own favicon (P3); footer links too small to tap (P3); the logo row of the authentication pages outside any landmark (P3).
-**Open:** common passwords accepted; order emails thin; no product structured data (P3); preselected first option, duplicate ids on the Templates page, cut tab bars at 360 px, "Delivery: Free" on pickup-only stores, moderate editor accessibility findings (P4).
+**Open:** the common-password list is short (`password1234` passes); order emails thin; no product structured data (P3); preselected first option, duplicate ids on the Templates page, cut tab bars at 360 px, "Delivery: Free" on pickup-only stores, moderate editor accessibility findings (P4).
 
 ## 3. Core journeys
 
@@ -59,7 +59,7 @@ Plus one informational note and three suspected problems that investigation with
 - **Performance:** LCP 44–452 ms locally, CLS 0 on every page, editor interactions under 160 ms with the slowest handler 32 ms. Marketing pages ship 478 KB of JavaScript; signed-in pages 730–886 KB (decoded; unchanged by this phase). Field performance was not measured.
 - **Responsive:** no page-level overflow in 273 runs; the one real clipping defect (P10-001) fixed; all editor panels and dialogs fit at 360–768 px.
 - **Accessibility:** 0 critical and 0 serious findings on 39 pages × 2 widths; moderate items are the known editor landmarks.
-- **Security:** isolation between accounts held on every route tried; the store never trusts the browser for prices or stock; published sites keep a strict CSP and are script-free; the one policy gap is that very common passwords are allowed.
+- **Security:** isolation between accounts held on every route tried; the store never trusts the browser for prices or stock; published sites keep a strict CSP and are script-free; the one policy gap is that the common-password list is short (`password1234` passes).
 
 ## 6. External services not tested
 

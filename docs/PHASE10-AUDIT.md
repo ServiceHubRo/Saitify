@@ -43,7 +43,7 @@ Because the suites were broad, the audit concentrated on what a real user would 
 | P10-002 | P3 | Every published website requests its own `/favicon.svg`, and its own Content-Security-Policy (`img-src https: data:`) blocks it: a console error on every page and no favicon. |
 | P10-003 | P3 | Footer links are 19 px tall on phones. |
 | P10-004 | P3 | Login/register/reset pages put the logo row outside any landmark (axe "region"). |
-| P10-005 | P3 | Passwords such as `password1234` are accepted (only length ≥ 10 is checked). |
+| P10-005 | P3 | The common-password list (about 20 entries, Phase 4) is short: `password1234` passes it. Length ≥ 10 and the "not your own name/email" rule are enforced. |
 | P10-006 | P3 | Order emails are thin (see inventory A7): no totals or bank details for the customer, no contact details for the merchant, and nothing is sent when an order is paid, shipped, canceled or refunded. |
 | P10-007 | P3 | Product pages have no schema.org Product/Offer data. |
 | P10-008 | P4 | On a product with options the first available option is preselected, so "Add to cart" without choosing silently adds it. |

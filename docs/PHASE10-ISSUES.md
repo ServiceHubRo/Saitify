@@ -40,10 +40,11 @@ Status: **FIXED** (with a test that fails without the fix) · **OPEN** (reported
 
 ## Open
 
-### P10-005 · P3 · Common passwords are accepted
+### P10-005 · P3 · The common-password list is too short
 - **Reproduce:** register with the password `password1234` (12 characters): the account is created and signed in.
-- **Expected:** a very common password is refused with a clear message (the minimum length of 10 is enforced; other rules are not).
-- **Proposed fix:** a small blocklist of the most common passwords plus the person's own email/name, checked server-side with a friendly message. Not done here: it is a policy decision (and a new validation message) rather than a defect.
+- **Expected:** a very common password is refused ("That password is too common").
+- **Actual:** the rules are enforced (length ≥ 10, not a repeated character, not your own name or email, and a denylist of about 20 entries from Phase 4), but `password1234` is not on that short list.
+- **Proposed fix:** extend the denylist (for example with the top few thousand passwords, loaded server-side). Not done here: it is a policy choice, not a malfunction.
 
 ### P10-006 · P3 · Order emails lack the information a customer and a merchant need
 - **Reproduce:** place a bank-transfer order; read the two emails.
