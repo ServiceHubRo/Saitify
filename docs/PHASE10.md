@@ -51,7 +51,7 @@ Plus one informational note and three suspected problems that investigation with
 |---|---|
 | Lint, typecheck, build | clean, clean, succeeds |
 | Unit and integration | 413 passed |
-| End-to-end, 7 viewports | E2E_FINAL |
+| End-to-end, 7 viewports | 1269 passed, 0 failed, 19 skipped (1288 tests) |
 | Dependency audit | no known vulnerabilities (`pnpm audit --prod`) |
 
 ## 5. Findings by area

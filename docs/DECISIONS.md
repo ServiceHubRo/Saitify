@@ -67,7 +67,7 @@ No hooks or client JS in blocks; all visuals come from `--sf-*` tokens; responsi
 
 ## Phase 10
 - **D-100 Validation by behaviour, not by presence.** A control counts as working only when its effect was checked in the saved data, the screen and after a reload; the journeys diff the saved website before and after every edit.
-- **D-101 The test suite runs at 7 viewports** (360, 390, 430, 768, 1024, 1280, 1440). Extra browser contexts get their own fake network address so the rate limiter never couples tests.
+- **D-101 The test suite runs at 7 viewports** (360, 390, 430, 768, 1024, 1280, 1440). Extra browser contexts get their own random fake network address (no fixed addresses), because the product's hourly sign-up limit is per address and a shared one made the suite fail only when run at 7 viewports.
 - **D-102 The store's limits are recorded, not hidden.** `PHASE10-CAPABILITY-INVENTORY.md` is the source of requirements for the ecommerce phase; nothing was added to the store in Phase 10.
 - **D-103 Published websites may load their own icon** (`img-src 'self'`); everything else about their policy is unchanged.
 

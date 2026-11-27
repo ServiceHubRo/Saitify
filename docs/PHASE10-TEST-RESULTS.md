@@ -22,9 +22,9 @@ All results below come from commands and scripts that were run in this phase, ag
 | `pnpm typecheck` (all packages) | clean |
 | `pnpm build` | succeeds |
 | `pnpm test` (unit and integration, real embedded Postgres) | **413 passed**, 0 failed (17 files; 412 at the start of the phase, +1 generator fidelity matrix) |
-| `pnpm e2e` (Playwright, 7 viewports) | E2E_FINAL |
+| `pnpm e2e` (Playwright, 7 viewports) | **1269 passed, 0 failed, 19 skipped** (1288 tests, 16.9 minutes) |
 
-The first full 7-viewport run produced **4 failures** (`accounts` "duplicate email" and `publish` "subdomain rules", both on the last two viewports). They passed alone and were traced to **test infrastructure**, not the product: extra browser contexts that a test opens itself carried no network address header, so all of them shared the rate limiter's "unknown" address and tripped the hourly sign-up limit late in the long run. `e2e/helpers.ts` now gives every extra context its own fake address (tests that set their own keep it). No assertion was changed or removed.
+The first full 7-viewport runs produced **the same 4 failures twice** (`accounts` "duplicate email" and `publish` "subdomain rules", on the last two viewports, HTTP 429 on sign-up). They pass alone and were traced to **test infrastructure, not the product**: those tests opened a second browser context with a *fixed* fake network address (`10.77.1.1`) that two tests shared, so with 7 viewports they made 14 sign-ups from one address and tripped the product's correct hourly limit of 10 (with 5 viewports it was exactly 10, which is why it never showed before). The fixed addresses were removed; `e2e/helpers.ts` now gives every extra context its own random address. No assertion was changed or removed, and the rate limit itself is untouched.
 
 **Skipped tests:** the ones that skipped are the viewport-conditional skips already written in the suites (mobile menu only below 768 px, desktop navigation only from 768 px, the configurator's preview toggle only below 1280 px, an editor shortcut on touch screens, the playground's 1280 frame on narrower screens). None skips a behaviour this phase reports on.
 
