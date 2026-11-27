@@ -19,12 +19,12 @@ export function Footer() {
               <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-white/60">
                 {group.title}
               </h2>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-3 space-y-0.5">
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-[15px] text-white/85 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender"
+                      className="inline-flex min-h-10 items-center text-[15px] text-white/85 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lavender"
                     >
                       {link.label}
                     </Link>

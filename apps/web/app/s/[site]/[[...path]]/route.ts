@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 const SECURITY: Record<string, string> = {
   // The engine ships no JavaScript, so scripts are not allowed at all. Forms may only post back to the website itself, and the
   // only embedded frames allowed are YouTube (privacy mode) and Vimeo players used by posts and lessons.
-  'Content-Security-Policy': "default-src 'none'; img-src https: data:; style-src 'self' 'unsafe-inline'; font-src https: data:; frame-src https://www.youtube-nocookie.com https://player.vimeo.com; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+  'Content-Security-Policy': "default-src 'none'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; font-src https: data:; frame-src https://www.youtube-nocookie.com https://player.vimeo.com; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
