@@ -3,6 +3,7 @@ import type { Mailer, MailResult } from '../mail';
 import { burnPasswordCheck, hashPassword, hashToken, newToken, verifyPassword, hashKey } from './crypto';
 import { accountDeletedMail, alreadyRegisteredMail, changeEmailMail, emailChangedNotice, resetPasswordMail, verifyEmailMail } from './mails';
 import { consume, hit, isLimited, limitKey, reset } from './rate-limit';
+import { logEvent } from '../log';
 import { normalizeEmail, TERMS_VERSION, validateEmail, validateName, validatePassword } from './validation';
 
 export type Ctx = { db: Db; mailer: Mailer; baseUrl: string };
@@ -14,6 +15,12 @@ const toPublic = (u: UserRow): PublicUser => ({ id: u.id, name: u.name, email: u
 export type Fields = Record<string, string>;
 export type Delivery = 'sent' | 'unavailable' | 'failed';
 const deliveryOf = (r: MailResult): Delivery => (r.delivered ? 'sent' : r.reason === 'not_configured' ? 'unavailable' : 'failed');
+
+/** A provider that refuses or cannot be reached (for example an invalid RESEND_API_KEY) is an operational error: logged (no address, no text) and reported. */
+function noteMailFailure(purpose: string, r: MailResult): MailResult {
+  if (!r.delivered && r.reason === 'provider_error') logEvent('error', 'email_delivery_failed', { purpose, reason: r.reason });
+  return r;
+}
 
 const SESSION = { shortSec: 12 * 3600, longSec: 30 * 86400, absoluteLongSec: 90 * 86400, touchSec: 300 };
 const TOKEN_TTL = { verify_email: 24 * 3600, reset_password: 3600, change_email: 3600 } as const;
@@ -53,7 +60,7 @@ export type SendVerification = { status: 'sent' | 'unavailable' | 'failed' | 'al
 async function sendVerificationFor(ctx: Ctx, u: Pick<UserRow, 'id' | 'name' | 'email'>): Promise<Delivery> {
   if (!ctx.mailer.configured) return 'unavailable';
   const token = await issueToken(ctx.db, u.id, 'verify_email', u.email);
-  return deliveryOf(await ctx.mailer.send(verifyEmailMail(u.email, u.name, `${ctx.baseUrl}/verify-email#token=${token}`)));
+  return deliveryOf(noteMailFailure('verify_email', await ctx.mailer.send(verifyEmailMail(u.email, u.name, `${ctx.baseUrl}/verify-email#token=${token}`))));
 }
 
 /** Resend for a signed-in, unverified user. 1 per minute and 4 per hour. */
@@ -70,7 +77,7 @@ export async function resendVerification(ctx: Ctx, userId: string): Promise<Send
 }
 
 /** Resend from the "link expired" page. Same answer whether or not the email has an account. */
-export async function resendVerificationByEmail(ctx: Ctx, input: { email: string; ip: string }): Promise<{ status: 'ok' | 'invalid' | 'rate_limited' | 'unavailable'; retryAfterSec?: number }> {
+export async function resendVerificationByEmail(ctx: Ctx, input: { email: string; ip: string }): Promise<{ status: 'ok' | 'invalid' | 'rate_limited' | 'unavailable' | 'failed'; retryAfterSec?: number }> {
   if (validateEmail(input.email)) return { status: 'invalid' };
   const email = normalizeEmail(input.email);
   for (const l of [{ key: limitKey('vre', email), max: 3, windowSec: 3600 }, { key: limitKey('vri', input.ip), max: 15, windowSec: 3600 }]) {
@@ -80,7 +87,8 @@ export async function resendVerificationByEmail(ctx: Ctx, input: { email: string
   if (!ctx.mailer.configured) return { status: 'unavailable' };
   const rows = await ctx.db.query<UserRow>('select * from users where email = $1', [email]);
   const u = rows[0];
-  if (u && !u.email_verified_at) await sendVerificationFor(ctx, u);
+  // A provider failure is a system-wide condition, not something about this address; saying so is more honest than a silent "ok".
+  if (u && !u.email_verified_at && (await sendVerificationFor(ctx, u)) === 'failed') return { status: 'failed' };
   return { status: 'ok' };
 }
 
@@ -231,7 +239,7 @@ export async function purgeExpiredSessions(ctx: Ctx): Promise<void> {
 
 /* -------------------------------------------------------- password recovery */
 
-export async function forgotPassword(ctx: Ctx, input: { email: string; ip: string }): Promise<{ status: 'ok' | 'invalid' | 'unavailable' | 'rate_limited'; retryAfterSec?: number }> {
+export async function forgotPassword(ctx: Ctx, input: { email: string; ip: string }): Promise<{ status: 'ok' | 'invalid' | 'unavailable' | 'rate_limited' | 'failed'; retryAfterSec?: number }> {
   if (validateEmail(input.email)) return { status: 'invalid' };
   const email = normalizeEmail(input.email);
   for (const l of [{ key: limitKey('fp-email', email), max: 3, windowSec: 3600 }, { key: limitKey('fp-ip', input.ip), max: 15, windowSec: 3600 }]) {
@@ -243,7 +251,9 @@ export async function forgotPassword(ctx: Ctx, input: { email: string; ip: strin
   const u = rows[0];
   if (u) {
     const token = await issueToken(ctx.db, u.id, 'reset_password');
-    await ctx.mailer.send(resetPasswordMail(u.email, `${ctx.baseUrl}/reset-password#token=${token}`));
+    // A provider failure (for example an invalid email key) is reported to the person instead of promising an email that will never arrive.
+    const sent = noteMailFailure('reset_password', await ctx.mailer.send(resetPasswordMail(u.email, `${ctx.baseUrl}/reset-password#token=${token}`)));
+    if (!sent.delivered) return { status: 'failed' };
   }
   return { status: 'ok' };
 }

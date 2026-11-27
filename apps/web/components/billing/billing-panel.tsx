@@ -1,7 +1,7 @@
 'use client';
 
 import type { BillingStatus, BillingView, InvoiceView } from '@saitify/platform';
-import { classifyChange } from '@saitify/platform/client';
+import { classifyChange, STAGING_BILLING_MESSAGE } from '@saitify/platform/client';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { call } from '../app/api-client';
@@ -11,7 +11,7 @@ import { useToast } from '../app/toast';
 import { dateLabel, LIMIT_LABEL, money, type Interval } from './format';
 import { IntervalToggle, PlanCard } from './plan-card';
 
-type Payload = { billing: BillingView; available: boolean; mode: 'test' | 'live' | null };
+type Payload = { billing: BillingView; available: boolean; mode: 'test' | 'live' | null; stagingBlocked?: boolean };
 type Props = { initial: Payload; intent: { plan: string; interval: Interval } | null; checkout: 'success' | 'canceled' | null };
 type Pending = { kind: 'cancel' } | { kind: 'upgrade'; planId: string; interval: Interval };
 
@@ -139,7 +139,8 @@ export function BillingPanel({ initial, intent, checkout }: Props) {
         <Notice tone="error"><strong>Your paid access has ended because payment was not received.</strong> Free plan limits apply to creating and publishing. Everything you built is still here, and every website that is online stays online. Update your payment method to restore your plan.</Notice>
       ) : null}
       {b.status === 'payment_pending' ? <Notice tone="warning">Your payment needs another step before the plan can start. Open the billing portal to finish it.</Notice> : null}
-      {!data.available && b.plans.some((p) => p.id !== 'free') ? <Notice tone="info">Online payments are not available yet, so paid plans cannot be purchased right now. The Free plan works as usual.</Notice> : null}
+      {data.stagingBlocked ? <Notice tone="warning"><strong>Billing is switched off on this staging site.</strong> {STAGING_BILLING_MESSAGE}</Notice> : null}
+      {!data.available && !data.stagingBlocked && b.plans.some((p) => p.id !== 'free') ? <Notice tone="info">Online payments are not available yet, so paid plans cannot be purchased right now. The Free plan works as usual.</Notice> : null}
       {data.mode === 'test' ? <Notice tone="warning">Test mode: no real money moves. Use Stripe test cards only.</Notice> : null}
       {error ? <div role="alert"><Notice tone="error">{error}</Notice></div> : null}
 

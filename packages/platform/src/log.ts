@@ -4,6 +4,8 @@
  * name, Postgres SQLSTATE code and constraint, HTTP status). What is never logged: error messages (database and library messages
  * can contain submitted values), request bodies, headers, cookies, tokens, passwords, emails or payment data.
  */
+import { reportToMonitoring } from './monitoring';
+
 export type LogLevel = 'info' | 'warn' | 'error';
 export type LogContext = Record<string, string | number | boolean | null | undefined>;
 
@@ -34,6 +36,12 @@ export function logEvent(level: LogLevel, event: string, context: LogContext = {
     line[k] = typeof v === 'string' ? v.slice(0, 200) : v;
   }
   const out = JSON.stringify(line);
+  // Error reporting (only when SENTRY_DSN is set; otherwise this does nothing). It receives the same safe fields as the log line.
+  if (level === 'error') {
+    const safe: LogContext = {};
+    for (const [k, v] of Object.entries(context)) if (v !== undefined && v !== null && SAFE_KEY.test(k) && !FORBIDDEN.test(k)) safe[k] = v;
+    reportToMonitoring({ event, err }, safe, err === undefined ? {} : describeError(err), typeof process !== 'undefined' ? process.env : {});
+  }
   if (level === 'error') console.error(out);
   else if (level === 'warn') console.warn(out);
   else console.log(out);

@@ -12,7 +12,7 @@ Status key: **BLOCKER** = do not invite anyone until done · **REQUIRED** = need
 | B2 | Create the database tables: run `docs/sql/0003_publishing.sql`, `0004_billing.sql`, `0005_modules.sql` in the Supabase SQL editor (in this order) **or** run `pnpm --filter @saitify/platform db:migrate` with `DATABASE_URL` set. They only add tables and columns; they never delete anything. | The app refuses to start serving data on a database with pending migrations. | **needs you** |
 | B3 | Stripe **test mode** only: add the test secret key, create the webhook endpoint `https://<your site>/api/stripe/webhook`, copy its signing secret. | Billing must not touch real money until you decide. | **needs you** |
 | B4 | Have a qualified person review `/terms` and `/privacy` and fill every highlighted placeholder (company, address, legal basis, retention, rights, governing law, refunds). | The pages are drafts; Saitlify must not take real customers on unreviewed legal text. | **needs you** |
-| B5 | Decide the real public domain and set `APP_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ROOT_DOMAIN` accordingly. The code default is `saitify.ro`, but the brand is now Saitlify. | Email links, sitemap, canonical URLs and the address shown in the homepage demo come from these. | **needs you** |
+| B5 | Decide the real public domain and set `APP_URL` and `NEXT_PUBLIC_SITE_URL` to it. (Phase 11: no domain is hardcoded any more; `NEXT_PUBLIC_ROOT_DOMAIN` is not used.) | Email links, sitemap, canonical URLs and the address shown in the homepage demo come from these. | **needs you** |
 
 ## REQUIRED (before a closed beta)
 
@@ -49,7 +49,7 @@ Status key: **BLOCKER** = do not invite anyone until done · **REQUIRED** = need
 |---|---|---|
 | `DATABASE_URL` | Postgres/Supabase connection (pooled URL) | yes |
 | `APP_URL` | Public https origin of the app (cookies, email links, origin check) | yes |
-| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ROOT_DOMAIN` | Canonical URL, sitemap, root domain | yes |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL, sitemap (also needed when the site is built) | yes |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Account emails | for email |
 | `CONTACT_RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | Contact form | for contact |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Billing (use `sk_test_…` first) | for billing |

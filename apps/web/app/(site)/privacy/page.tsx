@@ -36,6 +36,11 @@ export default function PrivacyPage() {
             <strong>Contact form:</strong> the name, email, subject and message you type. The message is sent by email to the Saitlify team.
           </li>
           <li>
+            <strong>Error reports (only when error monitoring is switched on):</strong> when something breaks, a short technical report can be sent to an error-monitoring
+            provider: the kind of error, the part of the program where it happened and the page address without its numbers and parameters. Reports do not contain
+            messages, emails, passwords or cookies.
+          </li>
+          <li>
             <strong>Technical:</strong> abuse protection keeps counters keyed by a one-way hash of an IP address or email, not the address
             itself. Hosting providers may keep their own server logs.
           </li>
@@ -61,8 +66,8 @@ export default function PrivacyPage() {
       </LegalSection>
       <LegalSection title="5. Who receives your data">
         <p>
-          Saitlify uses service providers to run: a hosting provider (Netlify), a database provider, Stripe for payments and Resend for sending
-          email. Each receives only what it needs for its job.
+          Saitlify uses service providers to run: a hosting provider (Netlify), a database provider, Stripe for payments, Resend for sending
+          email and, when switched on, an error-monitoring provider. Each receives only what it needs for its job.
         </p>
         <p>
           <Todo>Final list of providers, their locations and the transfer safeguards that apply</Todo>

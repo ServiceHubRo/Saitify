@@ -1,7 +1,7 @@
 import type { GateData, MemberAreaData, MemberPlan } from '@saitify/engine';
 import { burnPasswordCheck, hashPassword, verifyPassword } from '../auth/crypto';
 import { consume, limitKey } from '../auth/rate-limit';
-import { normalizeEmail, passwordRules, validateEmail, validateName } from '../auth/validation';
+import { normalizeEmail, validateEmail, validateName, validatePassword } from '../auth/validation';
 import { isUniqueViolation } from '../auth/service';
 import type { Db } from '../db/types';
 import { ProjectError, isUuid } from '../projects/service';
@@ -146,8 +146,8 @@ export async function memberAction(ctx: SiteCtx, action: string, input: ActionIn
     if (ne) errors.name = ne;
     const ee = validateEmail(v.email ?? '');
     if (ee) errors.email = ee;
-    const broken = passwordRules(password, { email: v.email, name: v.name }).find((r) => !r.ok);
-    if (broken) errors.password = broken.id === 'length' ? 'Use at least 10 characters.' : broken.id === 'common' ? 'That password is too common.' : 'Do not use your name or email in the password.';
+    const pwError = validatePassword(password, { email: v.email, name: v.name });
+    if (pwError) errors.password = pwError;
     if (Object.keys(errors).length) return fail(sectionId, { errors, values: { ...values, view: 'register' } });
     const limit = await checkModuleLimit(ctx.db, ctx.project.ownerId, ctx.project.id, 'members_members');
     if (!limit.allowed) return fail(sectionId, { message: 'This website is not accepting new members right now.', values }, 409);

@@ -114,6 +114,7 @@ export function RegisterForm({ next }: { next: string }) {
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [sent, setSent] = useState<{ email: string; delivery: string } | null>(null);
+  const [unsent, setUnsent] = useState<'unavailable' | 'failed' | null>(null);
   const set = (k: keyof typeof v) => (value: string) => setV((s) => ({ ...s, [k]: value }));
   const rules = passwordRules(v.password, { email: v.email, name: v.name });
 
@@ -125,8 +126,11 @@ export function RegisterForm({ next }: { next: string }) {
       const r = await call<{ signedIn: boolean; delivery: string }>('/api/auth/register', { body: { ...v, acceptTerms: terms } });
       if (r.ok) {
         if (r.data.signedIn) {
-          router.replace(next);
-          router.refresh();
+          // Only go straight on when the confirmation email really went out; otherwise say so (and keep the account: it is ready).
+          if (r.data.delivery === 'sent') {
+            router.replace(next);
+            router.refresh();
+          } else setUnsent(r.data.delivery === 'failed' ? 'failed' : 'unavailable');
         } else setSent({ email: v.email, delivery: r.data.delivery });
         return;
       }
@@ -137,6 +141,20 @@ export function RegisterForm({ next }: { next: string }) {
     });
   };
 
+  if (unsent) {
+    return (
+      <div className="space-y-5" data-testid="register-email-unsent">
+        <Notice tone="warning">
+          <p className="font-semibold">Your account is ready, but we could not send the confirmation email</p>
+          <p className="mt-1">
+            {unsent === 'failed' ? 'The email service did not accept the message just now. ' : 'Email delivery is not set up on this site yet. '}
+            You are signed in and your work will be saved. You can ask for the email again from your dashboard once email is working.
+          </p>
+        </Notice>
+        <Button onClick={() => { router.replace(next); router.refresh(); }}>Continue to my account</Button>
+      </div>
+    );
+  }
   if (sent) {
     return (
       <div className="space-y-5" data-testid="register-check-email">

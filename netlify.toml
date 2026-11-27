@@ -1,0 +1,27 @@
+# Netlify build configuration for Saitlify (Phase 11).
+#
+# IMPORTANT: settings in this file override the same settings in the Netlify web UI. It describes what docs/BETA-CHECKLIST.md
+# lists: base directory = repository root, build command = `pnpm build`, Node 22, pnpm 10 (the exact pnpm version is pinned by the
+# "packageManager" field in package.json). Netlify's Next.js runtime is detected automatically; no publish directory is set on
+# purpose (the runtime chooses it).
+# BEFORE MERGING: open the site in Netlify -> Site configuration -> Build & deploy -> Continuous deployment -> Build settings and
+# compare "Base directory", "Build command" and "Publish directory" with this file (see docs/PHASE11-ACTIONS-NEEDED.md, step N1).
+#
+# NO secrets belong in this file. Secrets and per-environment values are set in the Netlify UI (Site configuration -> Environment
+# variables), scoped to the contexts that need them.
+
+[build]
+  command = "pnpm build"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10.0.0"
+
+# Deploy previews (one per pull request) and branch deploys are never production. STAGING=true makes the app refuse live Stripe
+# keys and tell search engines not to index it. A SEPARATE staging site that deploys its own branch as "production" must set
+# STAGING=true in its own Netlify environment variables instead (this file cannot know it is a staging site).
+[context.deploy-preview.environment]
+  STAGING = "true"
+
+[context.branch-deploy.environment]
+  STAGING = "true"

@@ -7,3 +7,5 @@ export * from './modules/resources';
 export * from './modules/time';
 export { classifyChange, FREE_PLAN_ID, type Interval, type BillingStatus } from './billing/policy';
 export { isPrivatePath, loginUrlFor, sessionCookieName, PRIVATE_PREFIXES } from './auth/routes';
+export { reportClientError } from './monitoring';
+export { STAGING_BILLING_MESSAGE } from './staging';
